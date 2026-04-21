@@ -6,16 +6,16 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  // التأكد من وجود مفتاح Gemini
+  // التأكد من وجود مفتاح Gemini (سيقرأ من إعدادات Vercel)
   const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' })
+  if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY is not configured in Vercel' })
 
   const { cvData } = req.body
   if (!cvData) return res.status(400).json({ error: 'CV data is required' })
 
   try {
     // إرسال الطلب لـ Google Gemini
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${AIzaSyAet-uW3T5pZ2i4lg0vRP1-P1beYe0qHmU}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
         generationConfig: {
           temperature: 0.7,
           maxOutputTokens: 1024,
-          responseMimeType: "application/json" // إجبار الموديل يرجع JSON
+          responseMimeType: "application/json"
         }
       }),
     })
@@ -42,13 +42,10 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json()
-    
-    // استخراج النص من رد Gemini
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text
 
     if (!content) return res.status(500).json({ error: 'Empty response from Gemini' })
 
-    // تحويل النص لـ JSON وإرساله للمتصفح
     const parsed = JSON.parse(content)
     return res.status(200).json(parsed)
 
@@ -95,5 +92,5 @@ Languages: ${languages}
 
 Rules:
 - Return ONLY valid JSON.
-- Do not include markdown backticks like \`\`\`json.`
+- Do not include markdown backticks.`
 }
