@@ -3,6 +3,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
@@ -14,8 +15,9 @@ export default async function handler(req, res) {
   if (!cvData) return res.status(400).json({ error: 'CV data is required' })
 
   try {
-    // إرسال الطلب لـ Google Gemini
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    // ── إرسال الطلب لـ Google Gemini ──
+    // استخدمنا v1 النسخة المستقرة و gemini-pro لضمان أعلى توافق
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -26,10 +28,10 @@ export default async function handler(req, res) {
             text: buildPrompt(cvData)
           }]
         }],
+        // شلنا responseMimeType لأنها كانت بتعمل Error في بعض النسخ
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 1024,
-          responseMimeType: "application/json"
+          maxOutputTokens: 1024
         }
       }),
     })
@@ -46,7 +48,10 @@ export default async function handler(req, res) {
 
     if (!content) return res.status(500).json({ error: 'Empty response from Gemini' })
 
-    const parsed = JSON.parse(content)
+    // تنظيف النص من أي علامات Markdown (مثل ```json) قد يضيفها الموديل يدوياً
+    const cleanJson = content.replace(/```json|```/g, "").trim()
+    
+    const parsed = JSON.parse(cleanJson)
     return res.status(200).json(parsed)
 
   } catch (err) {
@@ -92,5 +97,5 @@ Languages: ${languages}
 
 Rules:
 - Return ONLY valid JSON.
-- Do not include markdown backticks.`
+- Do not include markdown backticks like \`\`\`json.`
 }
