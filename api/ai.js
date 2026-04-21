@@ -16,8 +16,8 @@ export default async function handler(req, res) {
 
   try {
     // ── إرسال الطلب لـ Google Gemini ──
-    // استخدمنا v1 النسخة المستقرة و gemini-pro لضمان أعلى توافق
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`, {
+    // تم التعديل لـ v1beta و gemini-1.5-flash لضمان التوافق مع آخر تحديثات جوجل
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -28,10 +28,11 @@ export default async function handler(req, res) {
             text: buildPrompt(cvData)
           }]
         }],
-        // شلنا responseMimeType لأنها كانت بتعمل Error في بعض النسخ
         generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 1024
+          temperature: 1, // تم رفعه قليلاً لتحسين جودة التحليل
+          topP: 0.95,
+          topK: 64,
+          maxOutputTokens: 8192,
         }
       }),
     })
@@ -48,7 +49,7 @@ export default async function handler(req, res) {
 
     if (!content) return res.status(500).json({ error: 'Empty response from Gemini' })
 
-    // تنظيف النص من أي علامات Markdown (مثل ```json) قد يضيفها الموديل يدوياً
+    // تنظيف النص من أي علامات Markdown عشان الـ JSON يتقري صح
     const cleanJson = content.replace(/```json|```/g, "").trim()
     
     const parsed = JSON.parse(cleanJson)
@@ -97,5 +98,5 @@ Languages: ${languages}
 
 Rules:
 - Return ONLY valid JSON.
-- Do not include markdown backticks like \`\`\`json.`
+- Do not include markdown backticks.`
 }
