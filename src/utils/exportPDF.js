@@ -43,7 +43,7 @@ export async function exportPDF(filename = 'my-cv') {
   `
   document.head.appendChild(style)
 
-  // ── clone الـ CV في container مؤقت ──
+  // ── clone الـ CV ──
   const container = document.createElement('div')
   container.id = 'print-container'
   container.style.display = 'none'
@@ -52,41 +52,55 @@ export async function exportPDF(filename = 'my-cv') {
   clone.id = 'cv-preview'
   clone.style.width = '210mm'
   clone.style.transform = 'none'
+
   container.appendChild(clone)
   document.body.appendChild(container)
 
-  // ── تحديث الـ metadata ──
+  // ── metadata ──
   const originalTitle = document.title
   const now = new Date()
   const dateStr = now.toLocaleDateString('en-GB', {
     day: '2-digit', month: 'long', year: 'numeric'
   })
 
-  // اسم الملف + التاريخ كـ document title (بيظهر في الـ PDF metadata)
   document.title = `${filename} — CV — ${dateStr}`
 
-  // ── إضافة meta tags للـ PDF metadata ──
   const metaTags = [
-    { name: 'author',      content: filename },
+    { name: 'author', content: filename },
     { name: 'description', content: `Professional CV for ${filename} — Generated ${dateStr}` },
-    { name: 'created',     content: now.toISOString() },
+    { name: 'created', content: now.toISOString() },
   ]
+
   const addedMetas = metaTags.map(m => {
     const meta = document.createElement('meta')
-    meta.name    = m.name
+    meta.name = m.name
     meta.content = m.content
     document.head.appendChild(meta)
     return meta
   })
 
+  // 🔥 مهم جدًا للموبايل: نستنى قبل الطباعة
+  await new Promise(resolve => setTimeout(resolve, 300))
+
   // ── طباعة ──
   window.print()
 
-  // ── تنظيف بعد الطباعة ──
+  // 🔥 ندي وقت قبل التنضيف عشان الموبايل يلحق
   setTimeout(() => {
     document.title = originalTitle
-    document.head.removeChild(style)
-    document.body.removeChild(container)
-    addedMetas.forEach(m => document.head.removeChild(m))
-  }, 1500)
+
+    if (style.parentNode) {
+      document.head.removeChild(style)
+    }
+
+    if (container.parentNode) {
+      document.body.removeChild(container)
+    }
+
+    addedMetas.forEach(m => {
+      if (m.parentNode) {
+        document.head.removeChild(m)
+      }
+    })
+  }, 2000)
 }
