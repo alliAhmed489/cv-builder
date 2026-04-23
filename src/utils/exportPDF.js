@@ -2,105 +2,51 @@ export async function exportPDF(filename = 'my-cv') {
   const cvEl = document.getElementById('cv-preview')
   if (!cvEl) return
 
-  // ── إضافة style للطباعة ──
-  const style = document.createElement('style')
-  style.id = 'print-style'
-  style.textContent = `
-    @media print {
-      @page {
-        size: A4;
-        margin: 0;
-      }
-
-      body > * {
-        display: none !important;
-      }
-
-      #print-container {
-        display: block !important;
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 210mm !important;
-        z-index: 99999 !important;
-      }
-
-      #cv-preview {
-        width: 210mm !important;
-        min-width: 210mm !important;
-        transform: none !important;
-        box-shadow: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-    }
-  `
-  document.head.appendChild(style)
-
-  // ── clone الـ CV ──
-  const container = document.createElement('div')
-  container.id = 'print-container'
-  container.style.display = 'none'
-
+  // ── نجيب نسخة من الـ CV ──
   const clone = cvEl.cloneNode(true)
-  clone.id = 'cv-preview'
-  clone.style.width = '210mm'
-  clone.style.transform = 'none'
 
-  container.appendChild(clone)
-  document.body.appendChild(container)
+  // ── نفتح نافذة جديدة ──
+  const printWindow = window.open('', '_blank')
 
-  // ── metadata ──
-  const originalTitle = document.title
-  const now = new Date()
-  const dateStr = now.toLocaleDateString('en-GB', {
-    day: '2-digit', month: 'long', year: 'numeric'
-  })
+  if (!printWindow) {
+    alert('Please allow popups to download PDF')
+    return
+  }
 
-  document.title = `${filename} — CV — ${dateStr}`
+  // ── HTML للنافذة الجديدة ──
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>${filename}</title>
+        <style>
+          body {
+            margin: 0;
+            padding: 0;
+            background: white;
+          }
 
-  const metaTags = [
-    { name: 'author', content: filename },
-    { name: 'description', content: `Professional CV for ${filename} — Generated ${dateStr}` },
-    { name: 'created', content: now.toISOString() },
-  ]
+          #cv-preview {
+            width: 210mm;
+            margin: auto;
+          }
 
-  const addedMetas = metaTags.map(m => {
-    const meta = document.createElement('meta')
-    meta.name = m.name
-    meta.content = m.content
-    document.head.appendChild(meta)
-    return meta
-  })
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        </style>
+      </head>
+      <body>
+        ${clone.outerHTML}
+      </body>
+    </html>
+  `)
 
-  // 🔥 مهم جدًا للموبايل: نستنى قبل الطباعة
-  await new Promise(resolve => setTimeout(resolve, 300))
+  printWindow.document.close()
 
-  // ── طباعة ──
-  window.print()
-
-  // 🔥 ندي وقت قبل التنضيف عشان الموبايل يلحق
+  // 🔥 مهم: نستنى شوية
   setTimeout(() => {
-    document.title = originalTitle
-
-    if (style.parentNode) {
-      document.head.removeChild(style)
-    }
-
-    if (container.parentNode) {
-      document.body.removeChild(container)
-    }
-
-    addedMetas.forEach(m => {
-      if (m.parentNode) {
-        document.head.removeChild(m)
-      }
-    })
-  }, 2000)
+    printWindow.focus()
+    printWindow.print()
+  }, 500)
 }
