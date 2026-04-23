@@ -1,6 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Download, RefreshCw, FileText, User, AlignLeft, Briefcase, GraduationCap, Zap, Globe, Sparkles } from 'lucide-react'
+import {
+  Download, RefreshCw, FileText, User, AlignLeft,
+  Briefcase, GraduationCap, Zap, Globe, Sparkles,
+  Eye, EyeOff, ChevronLeft, ChevronRight
+} from 'lucide-react'
 import { useCV } from './hooks/useCV.js'
 import { exportPDF } from './utils/exportPDF.js'
 import { THEMES } from './data/themes.js'
@@ -25,18 +29,38 @@ const STEPS = [
 
 const TEMPLATES = ['classic', 'modern', 'executive']
 
+function useBreakpoint() {
+  const [bp, setBp] = useState(() => {
+    const w = window.innerWidth
+    return w < 768 ? 'mobile' : w < 1024 ? 'tablet' : 'desktop'
+  })
+  useEffect(() => {
+    const handler = () => {
+      const w = window.innerWidth
+      setBp(w < 768 ? 'mobile' : w < 1024 ? 'tablet' : 'desktop')
+    }
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return bp
+}
+
 export default function App() {
-  const [activeStep, setActiveStep] = useState('personal')
-  const [exporting, setExporting]   = useState(false)
-  const [themeId, setThemeId]       = useState('navy')
-  const [showThemes, setShowThemes] = useState(false)
-  const [showAI, setShowAI]         = useState(false)
+  const [activeStep, setActiveStep]   = useState('personal')
+  const [exporting, setExporting]     = useState(false)
+  const [themeId, setThemeId]         = useState('navy')
+  const [showThemes, setShowThemes]   = useState(false)
+  const [showAI, setShowAI]           = useState(false)
+  const [mobileTab, setMobileTab]     = useState('form') // 'form' | 'preview'
 
   const cvHook = useCV()
   const { cv, template, setTemplate, resetCV } = cvHook
+  const bp = useBreakpoint()
 
   const activeTheme = THEMES.find(t => t.id === themeId) || THEMES[0]
   const activeIndex = STEPS.findIndex(s => s.id === activeStep)
+  const isMobile    = bp === 'mobile'
+  const isTablet    = bp === 'tablet'
 
   async function handleExport() {
     setExporting(true)
@@ -45,7 +69,6 @@ export default function App() {
   }
 
   function renderStep() {
-    const props = { dark: true }
     switch (activeStep) {
       case 'personal':   return <PersonalForm   personal={cv.personal}     updatePersonal={cvHook.updatePersonal} />
       case 'summary':    return <SummaryForm     summary={cv.summary}       updateSummary={cvHook.updateSummary} />
@@ -57,90 +80,207 @@ export default function App() {
     }
   }
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#0f0f1e', fontFamily: '"DM Sans", sans-serif' }}>
+  const applyAI = (field, value) => {
+    if (field === 'title')   cvHook.updatePersonal('title', value)
+    if (field === 'summary') cvHook.updateSummary(value)
+  }
 
-      {/* ══════════ TOP BAR ══════════ */}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', height: '56px', background: '#1a1a2e', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, gap: '12px' }}>
+  // ────────────────────────────────────────────
+  // MOBILE LAYOUT
+  // ────────────────────────────────────────────
+  if (isMobile) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#0a0a18', fontFamily: "'DM Sans', sans-serif", overflow: 'hidden' }}>
 
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: 'linear-gradient(135deg, #c9a84c, #e8cc7a)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(201,168,76,0.4)' }}>
-            <FileText size={15} color="#1a1a2e" />
+        {/* Mobile header */}
+        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: '52px', background: '#1a1a2e', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, zIndex: 50 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #c9a84c, #e8cc7a)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FileText size={13} color="#1a1a2e" />
+            </div>
+            <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>CVcraft</span>
           </div>
-          <div>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff', letterSpacing: '-0.3px' }}>CVcraft</span>
-            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginLeft: '6px' }}>Pro</span>
+
+          {/* Form / Preview toggle */}
+          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: '9px', padding: '3px', gap: '2px' }}>
+            {['form', 'preview'].map(tab => (
+              <button key={tab} onClick={() => setMobileTab(tab)}
+                style={{ padding: '5px 14px', borderRadius: '7px', border: 'none', cursor: 'pointer', background: mobileTab === tab ? '#c9a84c' : 'transparent', color: mobileTab === tab ? '#1a1a2e' : 'rgba(255,255,255,0.45)', fontSize: '12px', fontWeight: mobileTab === tab ? 700 : 400, fontFamily: "'DM Sans', sans-serif", textTransform: 'capitalize', transition: 'all 0.15s' }}>
+                {tab === 'form' ? 'Edit' : 'Preview'}
+              </button>
+            ))}
           </div>
+        </header>
+
+        {/* Progress bar */}
+        <div style={{ height: '2px', background: 'rgba(255,255,255,0.06)', flexShrink: 0 }}>
+          <motion.div style={{ height: '100%', background: 'linear-gradient(90deg, #c9a84c, #e8cc7a)' }}
+            animate={{ width: `${((activeIndex + 1) / STEPS.length) * 100}%` }}
+            transition={{ duration: 0.35 }} />
         </div>
 
-        {/* Step tabs */}
-        <nav style={{ display: 'flex', gap: '2px', flex: 1, justifyContent: 'center' }}>
+        {/* Content area */}
+        <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+          <AnimatePresence mode="wait">
+
+            {/* ── Edit tab ── */}
+            {mobileTab === 'form' && (
+              <motion.div key="form" initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.22 }}
+                style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#1a1a2e' }}>
+
+                {/* Horizontal step tabs */}
+                <div style={{ display: 'flex', gap: '4px', padding: '10px 14px', background: '#16162a', borderBottom: '1px solid rgba(255,255,255,0.06)', overflowX: 'auto', flexShrink: 0, scrollbarWidth: 'none' }}>
+                  {STEPS.map((step, idx) => {
+                    const Icon   = step.icon
+                    const active = activeStep === step.id
+                    const done   = idx < activeIndex
+                    return (
+                      <button key={step.id} onClick={() => setActiveStep(step.id)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, background: active ? '#c9a84c' : done ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.05)', color: active ? '#1a1a2e' : done ? '#c9a84c' : 'rgba(255,255,255,0.45)', fontSize: '12px', fontWeight: active ? 700 : 400, fontFamily: "'DM Sans', sans-serif" }}>
+                        <Icon size={11} />
+                        {step.label}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Section label */}
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {(() => { const Icon = STEPS[activeIndex].icon; return <Icon size={14} color="#c9a84c" /> })()}
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{STEPS[activeIndex].label}</span>
+                  </div>
+                  <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)', padding: '3px 10px', borderRadius: '20px' }}>
+                    {activeIndex + 1} / {STEPS.length}
+                  </span>
+                </div>
+
+                {/* Form scroll area */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '16px', paddingBottom: '100px' }}>
+                  <AnimatedStep stepKey={activeStep}>{renderStep()}</AnimatedStep>
+                </div>
+
+                {/* Prev / Next */}
+                <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#16162a', display: 'flex', gap: '10px', flexShrink: 0 }}>
+                  <button onClick={() => { if (activeIndex > 0) setActiveStep(STEPS[activeIndex - 1].id) }} disabled={activeIndex === 0}
+                    style={{ width: '44px', height: '44px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: activeIndex === 0 ? 0.3 : 1, flexShrink: 0 }}>
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button onClick={() => { if (activeIndex < STEPS.length - 1) setActiveStep(STEPS[activeIndex + 1].id) }} disabled={activeIndex === STEPS.length - 1}
+                    style={{ flex: 1, height: '44px', borderRadius: '10px', border: 'none', background: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)', color: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.25)' : '#1a1a2e', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                    {activeIndex === STEPS.length - 1 ? '✓ Done' : <>Next <ChevronRight size={16} /></>}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── Preview tab ── */}
+            {mobileTab === 'preview' && (
+              <motion.div key="preview" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 24 }} transition={{ duration: 0.22 }}
+                style={{ position: 'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden', background: 'linear-gradient(135deg, #0f0f1e, #1a1a2e)', padding: '16px', paddingBottom: '100px' }}>
+
+                {/* Template + Theme row */}
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                  {TEMPLATES.map(t => (
+                    <button key={t} onClick={() => setTemplate(t)}
+                      style={{ padding: '6px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: template === t ? '#c9a84c' : 'rgba(255,255,255,0.08)', color: template === t ? '#1a1a2e' : 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: template === t ? 700 : 400, fontFamily: "'DM Sans', sans-serif", textTransform: 'capitalize' }}>
+                      {t}
+                    </button>
+                  ))}
+                  {THEMES.slice(0, 4).map(th => (
+                    <button key={th.id} onClick={() => setThemeId(th.id)}
+                      style={{ width: '28px', height: '28px', borderRadius: '50%', border: themeId === th.id ? `2px solid #fff` : '2px solid transparent', background: th.accent, cursor: 'pointer', padding: 0, transition: 'border 0.15s' }} />
+                  ))}
+                </div>
+
+                {/* Scaled CV */}
+                <MobilePreviewScaled cv={cv} template={template} theme={activeTheme} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Sticky bottom bar */}
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px', background: 'rgba(22,22,42,0.97)', borderTop: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)', display: 'flex', gap: '10px', zIndex: 100 }}>
+          <motion.button onClick={() => setShowAI(true)} whileTap={{ scale: 0.95 }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '13px', borderRadius: '12px', border: '1px solid rgba(201,168,76,0.35)', background: 'rgba(201,168,76,0.1)', color: '#c9a84c', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+            <Sparkles size={15} /> AI Coach
+          </motion.button>
+          <motion.button onClick={handleExport} disabled={exporting} whileTap={{ scale: 0.95 }}
+            style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '13px', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg, #c9a84c, #e8cc7a)', color: '#1a1a2e', fontSize: '13px', fontWeight: 800, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", boxShadow: '0 4px 16px rgba(201,168,76,0.35)', opacity: exporting ? 0.6 : 1 }}>
+            <Download size={15} />
+            {exporting ? 'Exporting…' : 'Download PDF'}
+          </motion.button>
+        </div>
+
+        {showAI && <AIModal cv={cv} onClose={() => setShowAI(false)} onApply={applyAI} />}
+      </div>
+    )
+  }
+
+  // ────────────────────────────────────────────
+  // TABLET + DESKTOP LAYOUT
+  // ────────────────────────────────────────────
+  const formWidth = isTablet ? '42%' : '420px'
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden', background: '#0a0a18', fontFamily: "'DM Sans', sans-serif" }}>
+
+      {/* Top bar */}
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: '56px', background: '#1a1a2e', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, gap: '8px', flexWrap: 'nowrap', overflow: 'hidden' }}>
+
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'linear-gradient(135deg, #c9a84c, #e8cc7a)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <FileText size={14} color="#1a1a2e" />
+          </div>
+          {!isTablet && <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>CVcraft</span>}
+        </div>
+
+        {/* Steps */}
+        <nav style={{ display: 'flex', gap: '2px', flex: 1, justifyContent: 'center', overflow: 'hidden' }}>
           {STEPS.map((step, idx) => {
-            const Icon = step.icon
-            const active  = activeStep === step.id
-            const done    = idx < activeIndex
+            const Icon   = step.icon
+            const active = activeStep === step.id
+            const done   = idx < activeIndex
             return (
-              <motion.button
-                key={step.id}
-                onClick={() => setActiveStep(step.id)}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '5px',
-                  padding: '5px 13px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                  background: active ? '#c9a84c' : done ? 'rgba(201,168,76,0.1)' : 'transparent',
-                  color: active ? '#1a1a2e' : done ? '#c9a84c' : 'rgba(255,255,255,0.4)',
-                  fontSize: '12px', fontWeight: active ? 700 : 500,
-                  fontFamily: '"DM Sans", sans-serif', transition: 'all 0.2s ease',
-                  position: 'relative',
-                }}
-              >
-                <Icon size={12} />
-                {step.label}
-                {done && !active && (
-                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#c9a84c', position: 'absolute', top: '4px', right: '4px' }} />
-                )}
+              <motion.button key={step.id} onClick={() => setActiveStep(step.id)} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: isTablet ? '5px 8px' : '5px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: active ? '#c9a84c' : done ? 'rgba(201,168,76,0.1)' : 'transparent', color: active ? '#1a1a2e' : done ? '#c9a84c' : 'rgba(255,255,255,0.4)', fontSize: isTablet ? '11px' : '12px', fontWeight: active ? 700 : 500, fontFamily: "'DM Sans', sans-serif", transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+                <Icon size={11} />
+                {!isTablet && step.label}
+                {isTablet && <span style={{ fontSize: '10px' }}>{step.label.slice(0,3)}</span>}
               </motion.button>
             )
           })}
         </nav>
 
-        {/* Right actions */}
+        {/* Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-
-          {/* Template */}
-          <div style={{ display: 'flex', gap: '2px', background: 'rgba(255,255,255,0.06)', borderRadius: '9px', padding: '3px' }}>
+          <div style={{ display: 'flex', gap: '2px', background: 'rgba(255,255,255,0.06)', borderRadius: '8px', padding: '3px' }}>
             {TEMPLATES.map(t => (
-              <motion.button key={t} onClick={() => setTemplate(t)} whileTap={{ scale: 0.95 }}
-                style={{ padding: '4px 11px', borderRadius: '7px', border: 'none', cursor: 'pointer', background: template === t ? 'rgba(255,255,255,0.12)' : 'transparent', color: template === t ? '#fff' : 'rgba(255,255,255,0.35)', fontSize: '11px', fontWeight: template === t ? 600 : 400, fontFamily: '"DM Sans", sans-serif', textTransform: 'capitalize', transition: 'all 0.2s ease' }}>
+              <button key={t} onClick={() => setTemplate(t)}
+                style={{ padding: '4px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: template === t ? 'rgba(255,255,255,0.12)' : 'transparent', color: template === t ? '#fff' : 'rgba(255,255,255,0.35)', fontSize: '11px', fontFamily: "'DM Sans', sans-serif", textTransform: 'capitalize', transition: 'all 0.15s' }}>
                 {t}
-              </motion.button>
+              </button>
             ))}
           </div>
 
-          {/* Theme */}
+          {/* Theme picker */}
           <div style={{ position: 'relative' }}>
-            <motion.button onClick={() => setShowThemes(s => !s)} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 11px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.65)', fontSize: '11px', cursor: 'pointer', fontFamily: '"DM Sans", sans-serif' }}>
-              <div style={{ width: '11px', height: '11px', borderRadius: '50%', background: activeTheme.accent }} />
-              {activeTheme.name}
-            </motion.button>
-
+            <button onClick={() => setShowThemes(s => !s)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', fontSize: '11px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+              <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: activeTheme.accent }} />
+              {!isTablet && activeTheme.name}
+            </button>
             <AnimatePresence>
               {showThemes && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                  transition={{ duration: 0.15 }}
-                  style={{ position: 'absolute', top: '38px', right: 0, background: '#1e1e35', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '8px', zIndex: 200, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3px', width: '210px', boxShadow: '0 12px 40px rgba(0,0,0,0.5)' }}>
+                <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.15 }}
+                  style={{ position: 'absolute', top: '38px', right: 0, background: '#1e1e35', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '8px', zIndex: 200, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3px', width: '200px', boxShadow: '0 12px 40px rgba(0,0,0,0.5)' }}>
                   {THEMES.map(th => (
                     <button key={th.id} onClick={() => { setThemeId(th.id); setShowThemes(false) }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: themeId === th.id ? 'rgba(255,255,255,0.08)' : 'transparent', color: '#fff', fontSize: '11px', fontFamily: '"DM Sans", sans-serif', transition: 'background 0.15s', textAlign: 'left' }}>
-                      <div style={{ width: '13px', height: '13px', borderRadius: '50%', background: th.accent, flexShrink: 0, boxShadow: `0 0 6px ${th.accent}60` }} />
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: themeId === th.id ? 'rgba(255,255,255,0.08)' : 'transparent', color: '#fff', fontSize: '11px', fontFamily: "'DM Sans', sans-serif", textAlign: 'left' }}>
+                      <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: th.accent, flexShrink: 0 }} />
                       {th.name}
-                      {themeId === th.id && <span style={{ marginLeft: 'auto', fontSize: '10px', color: '#c9a84c' }}>✓</span>}
                     </button>
                   ))}
                 </motion.div>
@@ -148,122 +288,137 @@ export default function App() {
             </AnimatePresence>
           </div>
 
-          {/* AI Button */}
-          <motion.button onClick={() => setShowAI(true)} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 13px', borderRadius: '8px', border: '1px solid rgba(201,168,76,0.35)', background: 'rgba(201,168,76,0.1)', color: '#c9a84c', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: '"DM Sans", sans-serif' }}>
-            <Sparkles size={13} /> AI Coach
+          <motion.button onClick={() => setShowAI(true)} whileHover={{ scale: 1.04, boxShadow: '0 0 20px rgba(201,168,76,0.3)' }} whileTap={{ scale: 0.96 }}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(201,168,76,0.35)', background: 'rgba(201,168,76,0.1)', color: '#c9a84c', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+            <Sparkles size={13} /> {!isTablet && 'AI Coach'}
           </motion.button>
 
-          {/* Reset */}
-          <motion.button onClick={resetCV} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 11px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'rgba(255,255,255,0.4)', fontSize: '11px', cursor: 'pointer', fontFamily: '"DM Sans", sans-serif' }}>
-            <RefreshCw size={11} /> Reset
-          </motion.button>
+          <button onClick={resetCV}
+            style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <RefreshCw size={12} />
+          </button>
 
-          {/* Download */}
-          <motion.button onClick={handleExport} disabled={exporting} whileHover={{ scale: 1.04, boxShadow: '0 4px 20px rgba(201,168,76,0.4)' }} whileTap={{ scale: 0.96 }}
-            style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '7px 16px', borderRadius: '9px', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #c9a84c, #e8cc7a)', color: '#1a1a2e', fontSize: '12px', fontWeight: 700, fontFamily: '"DM Sans", sans-serif', opacity: exporting ? 0.6 : 1, boxShadow: '0 2px 12px rgba(201,168,76,0.3)' }}>
+          <motion.button onClick={handleExport} disabled={exporting} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '9px', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #c9a84c, #e8cc7a)', color: '#1a1a2e', fontSize: '12px', fontWeight: 700, fontFamily: "'DM Sans', sans-serif", opacity: exporting ? 0.6 : 1, boxShadow: '0 2px 12px rgba(201,168,76,0.3)' }}>
             <Download size={13} />
             {exporting ? 'Exporting…' : 'Download PDF'}
           </motion.button>
         </div>
       </header>
 
-      {/* Progress bar */}
+      {/* Progress */}
       <div style={{ height: '2px', background: 'rgba(255,255,255,0.06)', flexShrink: 0 }}>
-        <motion.div
-          style={{ height: '100%', background: 'linear-gradient(90deg, #c9a84c, #e8cc7a)', transformOrigin: 'left' }}
+        <motion.div style={{ height: '100%', background: 'linear-gradient(90deg, #c9a84c, #e8cc7a)' }}
           animate={{ width: `${((activeIndex + 1) / STEPS.length) * 100}%` }}
-          transition={{ duration: 0.4, ease: 'easeInOut' }}
-        />
+          transition={{ duration: 0.4 }} />
       </div>
 
-      {/* ══════════ MAIN ══════════ */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      {/* Main */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }} onClick={() => showThemes && setShowThemes(false)}>
 
-        {/* Form Panel */}
-        <div style={{ width: '420px', flexShrink: 0, display: 'flex', flexDirection: 'column', background: '#1a1a2e', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-
-          {/* Section header */}
-          <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Form */}
+        <div style={{ width: formWidth, flexShrink: 0, display: 'flex', flexDirection: 'column', background: '#1a1a2e', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {(() => { const Icon = STEPS[activeIndex].icon; return (
-                <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon size={14} color="#c9a84c" />
+                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon size={13} color="#c9a84c" />
                 </div>
               )})()}
-              <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>
-                {STEPS[activeIndex].label}
-              </span>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>{STEPS[activeIndex].label}</span>
             </div>
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)', padding: '3px 10px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)', padding: '3px 10px', borderRadius: '20px' }}>
               {activeIndex + 1} / {STEPS.length}
             </span>
           </div>
 
-          {/* Scrollable form with animation */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-            <AnimatedStep stepKey={activeStep}>
-              {renderStep()}
-            </AnimatedStep>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+            <AnimatedStep stepKey={activeStep}>{renderStep()}</AnimatedStep>
           </div>
 
-          {/* Prev / Next footer */}
-          <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#16162a', flexShrink: 0 }}>
-
-            {/* Dots */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '5px', marginBottom: '14px' }}>
+          <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#16162a', flexShrink: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '5px', marginBottom: '12px' }}>
               {STEPS.map((_, i) => (
                 <motion.div key={i} onClick={() => setActiveStep(STEPS[i].id)}
-                  animate={{ width: i === activeIndex ? '20px' : '6px', background: i === activeIndex ? '#c9a84c' : i < activeIndex ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.12)' }}
+                  animate={{ width: i === activeIndex ? '18px' : '6px', background: i === activeIndex ? '#c9a84c' : i < activeIndex ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.12)' }}
                   transition={{ duration: 0.2 }}
-                  style={{ height: '6px', borderRadius: '3px', cursor: 'pointer' }}
-                />
+                  style={{ height: '6px', borderRadius: '3px', cursor: 'pointer' }} />
               ))}
             </div>
-
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <motion.button
-                onClick={() => { if (activeIndex > 0) setActiveStep(STEPS[activeIndex - 1].id) }}
-                disabled={activeIndex === 0}
-                whileHover={{ scale: activeIndex === 0 ? 1 : 1.02 }}
-                whileTap={{ scale: activeIndex === 0 ? 1 : 0.97 }}
-                style={{ flex: '0 0 auto', padding: '11px 20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', fontSize: '13px', cursor: activeIndex === 0 ? 'not-allowed' : 'pointer', fontFamily: '"DM Sans", sans-serif', opacity: activeIndex === 0 ? 0.3 : 1, transition: 'opacity 0.2s' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={() => { if (activeIndex > 0) setActiveStep(STEPS[activeIndex - 1].id) }} disabled={activeIndex === 0}
+                style={{ padding: '10px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', fontSize: '13px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", opacity: activeIndex === 0 ? 0.3 : 1 }}>
                 ← Prev
-              </motion.button>
-
-              <motion.button
-                onClick={() => { if (activeIndex < STEPS.length - 1) setActiveStep(STEPS[activeIndex + 1].id) }}
-                disabled={activeIndex === STEPS.length - 1}
-                whileHover={{ scale: activeIndex === STEPS.length - 1 ? 1 : 1.02, boxShadow: activeIndex === STEPS.length - 1 ? 'none' : '0 4px 16px rgba(201,168,76,0.35)' }}
-                whileTap={{ scale: 0.97 }}
-                style={{
-                  flex: 1, padding: '12px', borderRadius: '10px', border: 'none',
-                  background: activeIndex === STEPS.length - 1
-                    ? 'rgba(255,255,255,0.06)'
-                    : 'linear-gradient(135deg, #c9a84c, #e8cc7a)',
-                  color: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.25)' : '#1a1a2e',
-                  fontSize: '13px', fontWeight: 700, cursor: activeIndex === STEPS.length - 1 ? 'not-allowed' : 'pointer',
-                  fontFamily: '"DM Sans", sans-serif',
-                  boxShadow: activeIndex === STEPS.length - 1 ? 'none' : '0 2px 10px rgba(201,168,76,0.25)',
-                }}>
+              </button>
+              <motion.button onClick={() => { if (activeIndex < STEPS.length - 1) setActiveStep(STEPS[activeIndex + 1].id) }} disabled={activeIndex === STEPS.length - 1}
+                whileHover={{ scale: activeIndex === STEPS.length - 1 ? 1 : 1.02 }} whileTap={{ scale: 0.97 }}
+                style={{ flex: 1, padding: '11px', borderRadius: '10px', border: 'none', background: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)', color: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.25)' : '#1a1a2e', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
                 {activeIndex === STEPS.length - 1 ? '✓ All Done' : 'Next Step →'}
               </motion.button>
             </div>
           </div>
         </div>
 
-        {/* Preview Panel */}
-        <div
-          style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', padding: '40px 32px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', background: 'linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%)' }}
-          onClick={() => showThemes && setShowThemes(false)}
-        >
-          <CVPreview cv={cv} template={template} theme={activeTheme} />
+        {/* Preview */}
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', padding: isTablet ? '24px 16px' : '40px 32px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', background: 'linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%)' }}>
+          {isTablet
+            ? <TabletPreviewScaled cv={cv} template={template} theme={activeTheme} />
+            : <CVPreview cv={cv} template={template} theme={activeTheme} />
+          }
         </div>
       </div>
 
-      {/* AI Modal */}
-      {showAI && <AIModal cv={cv} onClose={() => setShowAI(false)} />}
+      {showAI && <AIModal cv={cv} onClose={() => setShowAI(false)} onApply={applyAI} />}
+    </div>
+  )
+}
+
+// ── Mobile: auto-scale CV to screen width ──
+function MobilePreviewScaled({ cv, template, theme }) {
+  const [scale, setScale] = useState(1)
+
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth - 32
+      setScale(w / 794)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  return (
+    <div style={{ width: '100%', overflow: 'hidden' }}>
+      <div style={{ height: `${1122 * scale}px`, position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, transformOrigin: 'top left', transform: `scale(${scale})`, boxShadow: '0 8px 40px rgba(0,0,0,0.5)', borderRadius: '4px' }}>
+          <CVPreview cv={cv} template={template} theme={theme} scaled={false} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Tablet: scale CV to fit panel ──
+function TabletPreviewScaled({ cv, template, theme }) {
+  const [scale, setScale] = useState(1)
+
+  useEffect(() => {
+    const update = () => {
+      const panelWidth  = window.innerWidth * 0.58 - 32
+      setScale(Math.min(panelWidth / 794, 1))
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  return (
+    <div style={{ width: '100%', overflow: 'hidden' }}>
+      <div style={{ height: `${1122 * scale}px`, position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, transformOrigin: 'top left', transform: `scale(${scale})`, boxShadow: '0 8px 40px rgba(0,0,0,0.4)', borderRadius: '4px' }}>
+          <CVPreview cv={cv} template={template} theme={theme} scaled={false} />
+        </div>
+      </div>
     </div>
   )
 }

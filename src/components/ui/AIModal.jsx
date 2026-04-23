@@ -23,7 +23,7 @@ export function AIModal({ cv, onClose, onApply }) {
       setResult(data)
       setStatus('success')
     } catch (err) {
-      setError(err.message)
+      setError(typeof err === 'string' ? err : JSON.stringify(err, null, 2))
       setStatus('error')
     }
   }

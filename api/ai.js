@@ -1,42 +1,77 @@
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  // ── CORS ──
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: "API Key Missing" });
+  if (req.method === 'OPTIONS') return res.status(200).end()
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+
+  // ✅ HuggingFace key بدل OpenAI
+  const apiKey = process.env.HUGGINGFACE_API_KEY
+  if (!apiKey) {
+    return res.status(500).json({ error: 'HUGGINGFACE_API_KEY is not configured' })
+  }
+
+  const { cvData } = req.body
+  if (!cvData) return res.status(400).json({ error: 'CV data is required' })
 
   try {
-    // ده الرابط الوحيد اللي شغال 100% دلوقتي لكل الناس
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const response = await fetch(
+      'https://api-inference.huggingface.co/models/google/flan-t5-large',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputs: buildPrompt(cvData),
+        }),
+      }
+    )
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `Analyze this CV and return ONLY a valid JSON: {"overallScore": 80, "job_title": "Developer", "tips": ["Great job"]}. CV DATA: ${JSON.stringify(req.body.cvData)}`
-          }]
-        }]
-      })
-    });
+    const data = await response.json()
 
-    const data = await response.json();
-
-    if (data.error) {
-      return res.status(500).json({ error: data.error.message });
+    const text = data?.[0]?.generated_text
+    if (!text) {
+      return res.status(500).json({ error: 'No response from HuggingFace', raw: data })
     }
 
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!content) return res.status(500).json({ error: "No response from AI" });
+    let parsed
+    try {
+      parsed = JSON.parse(text)
+    } catch (e) {
+      return res.status(500).json({
+        error: 'JSON parse failed',
+        raw: text,
+      })
+    }
 
-    // تنظيف الـ JSON من أي علامات Markdown
-    const cleanJson = content.replace(/```json|```/g, "").trim();
-    return res.status(200).json(JSON.parse(cleanJson));
+    return res.status(200).json(parsed)
 
   } catch (err) {
-    return res.status(500).json({ error: "Internal Error" });
+    console.error('AI handler error:', err)
+    return res.status(500).json({
+      error: err.message || 'Internal server error',
+    })
   }
+}
+
+// ── Prompt ──
+function buildPrompt(cv) {
+  return `
+Return ONLY JSON in this format:
+
+{
+  "overallScore": 80,
+  "job_title": "",
+  "summary": "",
+  "skills": [],
+  "tips": []
+}
+
+CV:
+${JSON.stringify(cv)}
+`
 }
