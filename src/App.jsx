@@ -30,10 +30,22 @@ const STEPS = [
 const TEMPLATES = ['classic', 'modern', 'executive']
 
 function useBreakpoint() {
-  const [bp, setBp] = useState(() => {
+  const getBP = () => {
+    if (typeof window === 'undefined') return 'desktop'
     const w = window.innerWidth
     return w < 768 ? 'mobile' : w < 1024 ? 'tablet' : 'desktop'
-  })
+  }
+
+  const [bp, setBp] = useState(getBP)
+
+  useEffect(() => {
+    const handler = () => setBp(getBP())
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+
+  return bp
+}
   useEffect(() => {
     const handler = () => {
       const w = window.innerWidth
@@ -67,7 +79,8 @@ export default function App() {
     if (exporting) return // prevent double-tap on mobile
     setExporting(true)
     try {
-      await exportPDF(cv.personal.name || 'my-cv')
+     const name = cv?.personal?.name || 'my-cv'
+await exportPDF(name)
     } catch (err) {
       console.error('[handleExport]', err)
       alert('Export failed. Please try again.')
