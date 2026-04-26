@@ -244,7 +244,7 @@ export default function App() {
                 exit={{ opacity: 0, x: 24 }} transition={{ duration: 0.22 }}
                 style={{
                   position: 'absolute', inset: 0,
-                  overflowY: 'auto', overflowX: 'hidden',  // scroll vertically, no x-overflow
+                  overflowY: 'auto', overflowX: 'auto',  // scroll vertically AND horizontally
                   background: 'linear-gradient(135deg, #0f0f1e, #1a1a2e)',
                   padding: '16px', paddingBottom: '100px',
                 }}
@@ -278,6 +278,13 @@ export default function App() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Hidden CV for PDF Export when in Edit Tab */}
+          {isMobile && mobileTab !== 'preview' && (
+            <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+              <CVPreview cv={cv} template={template} theme={activeTheme} scaled={false} />
+            </div>
+          )}
         </div>
 
         {/* Sticky bottom action bar */}
@@ -626,8 +633,10 @@ function MobilePreviewScaled({ cv, template, theme }) {
 
   useEffect(() => {
     const update = () => {
-      const availableW = window.innerWidth - 32   // 16px padding each side
-      setScale(availableW / 794)
+      // Zoom in more on mobile (min scale 0.6) so it's not too far.
+      // The container now allows horizontal scrolling to see the edges.
+      const rawScale = window.innerWidth / 794
+      setScale(Math.max(rawScale, 0.6))
     }
     update()
     window.addEventListener('resize', update)
