@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Button } from '../ui/Button.jsx'
 
-const SUGGESTIONS = ['JavaScript','TypeScript','React','Node.js','Python','SQL','Docker','AWS','Git','Figma','Leadership','Agile']
 
 export function SkillsForm({ skills, addSkill, removeSkill }) {
   const [input, setInput] = useState('')
@@ -35,17 +34,7 @@ export function SkillsForm({ skills, addSkill, removeSkill }) {
           ))}
         </div>
       )}
-      <div>
-        <p className="text-xs text-stone-400 mb-2">Suggestions — click to add</p>
-        <div className="flex flex-wrap gap-1.5">
-          {SUGGESTIONS.filter(s => !skills.includes(s)).map(s => (
-            <button key={s} type="button" onClick={() => addSkill(s)}
-              className="px-2.5 py-1 rounded-full border border-stone-200 text-xs text-stone-500 hover:border-navy-400 hover:text-navy-500 transition-all">
-              + {s}
-            </button>
-          ))}
-        </div>
-      </div>
+
     </div>
   )
 }
