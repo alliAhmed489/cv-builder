@@ -30,22 +30,10 @@ const STEPS = [
 const TEMPLATES = ['classic', 'modern', 'executive']
 
 function useBreakpoint() {
-  const getBP = () => {
-    if (typeof window === 'undefined') return 'desktop'
+  const [bp, setBp] = useState(() => {
     const w = window.innerWidth
     return w < 768 ? 'mobile' : w < 1024 ? 'tablet' : 'desktop'
-  }
-
-  const [bp, setBp] = useState(getBP)
-
-  useEffect(() => {
-    const handler = () => setBp(getBP())
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
-  }, [])
-
-  return bp
-}
+  })
   useEffect(() => {
     const handler = () => {
       const w = window.innerWidth
@@ -74,13 +62,12 @@ export default function App() {
   const isMobile    = bp === 'mobile'
   const isTablet    = bp === 'tablet'
 
-  // ── FIXED: safe export handler ──
+  // Prevent double-tap on mobile + proper error handling
   async function handleExport() {
-    if (exporting) return // prevent double-tap on mobile
+    if (exporting) return
     setExporting(true)
     try {
-     const name = cv?.personal?.name || 'my-cv'
-await exportPDF(name)
+      await exportPDF(cv.personal.name || 'my-cv')
     } catch (err) {
       console.error('[handleExport]', err)
       alert('Export failed. Please try again.')
@@ -106,15 +93,23 @@ await exportPDF(name)
     if (field === 'summary') cvHook.updateSummary(value)
   }
 
-  // ────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   // MOBILE LAYOUT
-  // ────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   if (isMobile) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#0a0a18', fontFamily: "'DM Sans', sans-serif", overflow: 'hidden' }}>
+      <div style={{
+        display: 'flex', flexDirection: 'column',
+        height: '100dvh', background: '#0a0a18',
+        fontFamily: "'DM Sans', sans-serif", overflow: 'hidden',
+      }}>
 
-        {/* Mobile header */}
-        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: '52px', background: '#1a1a2e', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, zIndex: 50 }}>
+        {/* Header */}
+        <header style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 16px', height: '52px', background: '#1a1a2e',
+          borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, zIndex: 50,
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #c9a84c, #e8cc7a)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <FileText size={13} color="#1a1a2e" />
@@ -125,8 +120,13 @@ await exportPDF(name)
           {/* Edit / Preview toggle */}
           <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: '9px', padding: '3px', gap: '2px' }}>
             {['form', 'preview'].map(tab => (
-              <button key={tab} onClick={() => setMobileTab(tab)}
-                style={{ padding: '5px 14px', borderRadius: '7px', border: 'none', cursor: 'pointer', background: mobileTab === tab ? '#c9a84c' : 'transparent', color: mobileTab === tab ? '#1a1a2e' : 'rgba(255,255,255,0.45)', fontSize: '12px', fontWeight: mobileTab === tab ? 700 : 400, fontFamily: "'DM Sans', sans-serif", textTransform: 'capitalize', transition: 'all 0.15s' }}>
+              <button key={tab} onClick={() => setMobileTab(tab)} style={{
+                padding: '5px 14px', borderRadius: '7px', border: 'none', cursor: 'pointer',
+                background: mobileTab === tab ? '#c9a84c' : 'transparent',
+                color: mobileTab === tab ? '#1a1a2e' : 'rgba(255,255,255,0.45)',
+                fontSize: '12px', fontWeight: mobileTab === tab ? 700 : 400,
+                fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
+              }}>
                 {tab === 'form' ? 'Edit' : 'Preview'}
               </button>
             ))}
@@ -142,28 +142,37 @@ await exportPDF(name)
           />
         </div>
 
-        {/* Content area */}
+        {/* Content */}
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
           <AnimatePresence mode="wait">
 
-            {/* Edit tab */}
+            {/* ── Edit tab ── */}
             {mobileTab === 'form' && (
               <motion.div key="form"
-                initial={{ opacity: 0, x: -24 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -24 }}
-                transition={{ duration: 0.22 }}
+                initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.22 }}
                 style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#1a1a2e' }}
               >
-                {/* Step tabs */}
-                <div style={{ display: 'flex', gap: '4px', padding: '10px 14px', background: '#16162a', borderBottom: '1px solid rgba(255,255,255,0.06)', overflowX: 'auto', flexShrink: 0, scrollbarWidth: 'none' }}>
+                {/* Step tabs — horizontal scroll */}
+                <div style={{
+                  display: 'flex', gap: '4px', padding: '10px 14px',
+                  background: '#16162a', borderBottom: '1px solid rgba(255,255,255,0.06)',
+                  overflowX: 'auto', flexShrink: 0, scrollbarWidth: 'none',
+                }}>
                   {STEPS.map((step, idx) => {
                     const Icon   = step.icon
                     const active = activeStep === step.id
                     const done   = idx < activeIndex
                     return (
-                      <button key={step.id} onClick={() => setActiveStep(step.id)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, background: active ? '#c9a84c' : done ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.05)', color: active ? '#1a1a2e' : done ? '#c9a84c' : 'rgba(255,255,255,0.45)', fontSize: '12px', fontWeight: active ? 700 : 400, fontFamily: "'DM Sans', sans-serif" }}>
+                      <button key={step.id} onClick={() => setActiveStep(step.id)} style={{
+                        display: 'flex', alignItems: 'center', gap: '5px',
+                        padding: '7px 12px', borderRadius: '8px', border: 'none',
+                        cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                        background: active ? '#c9a84c' : done ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.05)',
+                        color: active ? '#1a1a2e' : done ? '#c9a84c' : 'rgba(255,255,255,0.45)',
+                        fontSize: '12px', fontWeight: active ? 700 : 400,
+                        fontFamily: "'DM Sans', sans-serif",
+                      }}>
                         <Icon size={11} />
                         {step.label}
                       </button>
@@ -172,7 +181,10 @@ await exportPDF(name)
                 </div>
 
                 {/* Section label */}
-                <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+                <div style={{
+                  padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+                }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {(() => { const Icon = STEPS[activeIndex].icon; return <Icon size={14} color="#c9a84c" /> })()}
                     <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{STEPS[activeIndex].label}</span>
@@ -182,24 +194,42 @@ await exportPDF(name)
                   </span>
                 </div>
 
-                {/* Form scroll */}
+                {/* Form scroll — paddingBottom leaves room for sticky bar */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: '16px', paddingBottom: '100px' }}>
                   <AnimatedStep stepKey={activeStep}>{renderStep()}</AnimatedStep>
                 </div>
 
                 {/* Prev / Next */}
-                <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#16162a', display: 'flex', gap: '10px', flexShrink: 0 }}>
+                <div style={{
+                  padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)',
+                  background: '#16162a', display: 'flex', gap: '10px', flexShrink: 0,
+                }}>
                   <button
                     onClick={() => { if (activeIndex > 0) setActiveStep(STEPS[activeIndex - 1].id) }}
                     disabled={activeIndex === 0}
-                    style={{ width: '44px', height: '44px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: activeIndex === 0 ? 0.3 : 1, flexShrink: 0 }}
+                    style={{
+                      width: '44px', height: '44px', borderRadius: '10px',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)',
+                      cursor: activeIndex === 0 ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      opacity: activeIndex === 0 ? 0.3 : 1, flexShrink: 0,
+                    }}
                   >
                     <ChevronLeft size={18} />
                   </button>
                   <button
                     onClick={() => { if (activeIndex < STEPS.length - 1) setActiveStep(STEPS[activeIndex + 1].id) }}
                     disabled={activeIndex === STEPS.length - 1}
-                    style={{ flex: 1, height: '44px', borderRadius: '10px', border: 'none', background: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)', color: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.25)' : '#1a1a2e', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+                    style={{
+                      flex: 1, height: '44px', borderRadius: '10px', border: 'none',
+                      background: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)',
+                      color: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.25)' : '#1a1a2e',
+                      fontSize: '13px', fontWeight: 700,
+                      cursor: activeIndex === STEPS.length - 1 ? 'not-allowed' : 'pointer',
+                      fontFamily: "'DM Sans', sans-serif",
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+                    }}
                   >
                     {activeIndex === STEPS.length - 1 ? '✓ Done' : <>Next <ChevronRight size={16} /></>}
                   </button>
@@ -207,53 +237,77 @@ await exportPDF(name)
               </motion.div>
             )}
 
-            {/* Preview tab */}
+            {/* ── Preview tab ── */}
             {mobileTab === 'preview' && (
               <motion.div key="preview"
-                initial={{ opacity: 0, x: 24 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 24 }}
-                transition={{ duration: 0.22 }}
-                style={{ position: 'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden', background: 'linear-gradient(135deg, #0f0f1e, #1a1a2e)', padding: '16px', paddingBottom: '100px' }}
+                initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 24 }} transition={{ duration: 0.22 }}
+                style={{
+                  position: 'absolute', inset: 0,
+                  overflowY: 'auto', overflowX: 'hidden',  // scroll vertically, no x-overflow
+                  background: 'linear-gradient(135deg, #0f0f1e, #1a1a2e)',
+                  padding: '16px', paddingBottom: '100px',
+                }}
               >
-                {/* Template + Theme row */}
+                {/* Template + Theme selector row */}
                 <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
                   {TEMPLATES.map(t => (
-                    <button key={t} onClick={() => setTemplate(t)}
-                      style={{ padding: '6px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: template === t ? '#c9a84c' : 'rgba(255,255,255,0.08)', color: template === t ? '#1a1a2e' : 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: template === t ? 700 : 400, fontFamily: "'DM Sans', sans-serif", textTransform: 'capitalize' }}>
+                    <button key={t} onClick={() => setTemplate(t)} style={{
+                      padding: '6px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                      background: template === t ? '#c9a84c' : 'rgba(255,255,255,0.08)',
+                      color: template === t ? '#1a1a2e' : 'rgba(255,255,255,0.5)',
+                      fontSize: '11px', fontWeight: template === t ? 700 : 400,
+                      fontFamily: "'DM Sans', sans-serif", textTransform: 'capitalize',
+                    }}>
                       {t}
                     </button>
                   ))}
                   <div style={{ display: 'flex', gap: '6px', marginLeft: '4px' }}>
                     {THEMES.slice(0, 4).map(th => (
-                      <button key={th.id} onClick={() => setThemeId(th.id)}
-                        style={{ width: '26px', height: '26px', borderRadius: '50%', border: themeId === th.id ? '2px solid #fff' : '2px solid transparent', background: th.accent, cursor: 'pointer', padding: 0, transition: 'border 0.15s' }} />
+                      <button key={th.id} onClick={() => setThemeId(th.id)} style={{
+                        width: '26px', height: '26px', borderRadius: '50%', padding: 0,
+                        border: themeId === th.id ? '2px solid #fff' : '2px solid transparent',
+                        background: th.accent, cursor: 'pointer', transition: 'border 0.15s',
+                      }} />
                     ))}
                   </div>
                 </div>
 
-                {/* Scaled CV preview */}
+                {/* Scaled CV — fills width, scrolls vertically */}
                 <MobilePreviewScaled cv={cv} template={template} theme={activeTheme} />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Sticky bottom bar */}
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px', background: 'rgba(22,22,42,0.97)', borderTop: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)', display: 'flex', gap: '10px', zIndex: 100 }}>
-          <motion.button
-            onClick={() => setShowAI(true)}
-            whileTap={{ scale: 0.95 }}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '13px', borderRadius: '12px', border: '1px solid rgba(201,168,76,0.35)', background: 'rgba(201,168,76,0.1)', color: '#c9a84c', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
-          >
+        {/* Sticky bottom action bar */}
+        <div style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0,
+          padding: '12px 16px',
+          background: 'rgba(22,22,42,0.97)',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          backdropFilter: 'blur(20px)',
+          display: 'flex', gap: '10px', zIndex: 100,
+        }}>
+          <motion.button onClick={() => setShowAI(true)} whileTap={{ scale: 0.95 }} style={{
+            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+            padding: '13px', borderRadius: '12px',
+            border: '1px solid rgba(201,168,76,0.35)', background: 'rgba(201,168,76,0.1)',
+            color: '#c9a84c', fontSize: '13px', fontWeight: 700,
+            cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
+          }}>
             <Sparkles size={15} /> AI Coach
           </motion.button>
-          <motion.button
-            onClick={handleExport}
-            disabled={exporting}
-            whileTap={{ scale: 0.95 }}
-            style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '13px', borderRadius: '12px', border: 'none', background: exporting ? 'rgba(201,168,76,0.5)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)', color: '#1a1a2e', fontSize: '13px', fontWeight: 800, cursor: exporting ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans', sans-serif", boxShadow: '0 4px 16px rgba(201,168,76,0.35)' }}
-          >
+
+          <motion.button onClick={handleExport} disabled={exporting} whileTap={{ scale: 0.95 }} style={{
+            flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+            padding: '13px', borderRadius: '12px', border: 'none',
+            background: exporting ? 'rgba(201,168,76,0.5)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)',
+            color: '#1a1a2e', fontSize: '13px', fontWeight: 800,
+            cursor: exporting ? 'not-allowed' : 'pointer',
+            fontFamily: "'DM Sans', sans-serif",
+            boxShadow: '0 4px 16px rgba(201,168,76,0.35)',
+          }}>
             <Download size={15} />
             {exporting ? 'Exporting…' : 'Download PDF'}
           </motion.button>
@@ -264,16 +318,25 @@ await exportPDF(name)
     )
   }
 
-  // ────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   // TABLET + DESKTOP LAYOUT
-  // ────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   const formWidth = isTablet ? '42%' : '420px'
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden', background: '#0a0a18', fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{
+      display: 'flex', flexDirection: 'column',
+      height: '100dvh', overflow: 'hidden',
+      background: '#0a0a18', fontFamily: "'DM Sans', sans-serif",
+    }}>
 
-      {/* Top bar */}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: '56px', background: '#1a1a2e', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, gap: '8px', overflow: 'hidden' }}>
+      {/* ── Top navigation bar ── */}
+      <header style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 16px', height: '56px', background: '#1a1a2e',
+        borderBottom: '1px solid rgba(255,255,255,0.07)',
+        flexShrink: 0, gap: '8px', overflow: 'visible',
+      }}>
 
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
@@ -293,9 +356,16 @@ await exportPDF(name)
               <motion.button
                 key={step.id}
                 onClick={() => setActiveStep(step.id)}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: isTablet ? '5px 8px' : '5px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: active ? '#c9a84c' : done ? 'rgba(201,168,76,0.1)' : 'transparent', color: active ? '#1a1a2e' : done ? '#c9a84c' : 'rgba(255,255,255,0.4)', fontSize: isTablet ? '11px' : '12px', fontWeight: active ? 700 : 500, fontFamily: "'DM Sans', sans-serif", transition: 'all 0.2s', whiteSpace: 'nowrap' }}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '4px',
+                  padding: isTablet ? '5px 8px' : '5px 12px',
+                  borderRadius: '8px', border: 'none', cursor: 'pointer',
+                  background: active ? '#c9a84c' : done ? 'rgba(201,168,76,0.1)' : 'transparent',
+                  color: active ? '#1a1a2e' : done ? '#c9a84c' : 'rgba(255,255,255,0.4)',
+                  fontSize: isTablet ? '11px' : '12px', fontWeight: active ? 700 : 500,
+                  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.2s', whiteSpace: 'nowrap',
+                }}
               >
                 <Icon size={11} />
                 {!isTablet && step.label}
@@ -308,11 +378,16 @@ await exportPDF(name)
         {/* Right actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
 
-          {/* Templates */}
+          {/* Template switcher */}
           <div style={{ display: 'flex', gap: '2px', background: 'rgba(255,255,255,0.06)', borderRadius: '8px', padding: '3px' }}>
             {TEMPLATES.map(t => (
-              <button key={t} onClick={() => setTemplate(t)}
-                style={{ padding: '4px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: template === t ? 'rgba(255,255,255,0.12)' : 'transparent', color: template === t ? '#fff' : 'rgba(255,255,255,0.35)', fontSize: '11px', fontFamily: "'DM Sans', sans-serif", textTransform: 'capitalize', transition: 'all 0.15s' }}>
+              <button key={t} onClick={() => setTemplate(t)} style={{
+                padding: '4px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                background: template === t ? 'rgba(255,255,255,0.12)' : 'transparent',
+                color: template === t ? '#fff' : 'rgba(255,255,255,0.35)',
+                fontSize: '11px', fontFamily: "'DM Sans', sans-serif",
+                textTransform: 'capitalize', transition: 'all 0.15s',
+              }}>
                 {t}
               </button>
             ))}
@@ -320,23 +395,39 @@ await exportPDF(name)
 
           {/* Theme picker */}
           <div style={{ position: 'relative' }}>
-            <button onClick={() => setShowThemes(s => !s)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', fontSize: '11px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+            <button onClick={() => setShowThemes(s => !s)} style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '5px 10px', borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.12)',
+              background: 'rgba(255,255,255,0.05)',
+              color: 'rgba(255,255,255,0.6)', fontSize: '11px',
+              cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
+            }}>
               <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: activeTheme.accent }} />
               {!isTablet && activeTheme.name}
             </button>
+
             <AnimatePresence>
               {showThemes && (
                 <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.15 }}
-                  style={{ position: 'absolute', top: '38px', right: 0, background: '#1e1e35', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '8px', zIndex: 200, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3px', width: '200px', boxShadow: '0 12px 40px rgba(0,0,0,0.5)' }}
+                  initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.15 }}
+                  style={{
+                    position: 'absolute', top: '38px', right: 0,
+                    background: '#1e1e35', border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '12px', padding: '8px', zIndex: 200,
+                    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3px',
+                    width: '200px', boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+                  }}
                 >
                   {THEMES.map(th => (
-                    <button key={th.id} onClick={() => { setThemeId(th.id); setShowThemes(false) }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: themeId === th.id ? 'rgba(255,255,255,0.08)' : 'transparent', color: '#fff', fontSize: '11px', fontFamily: "'DM Sans', sans-serif", textAlign: 'left' }}>
+                    <button key={th.id} onClick={() => { setThemeId(th.id); setShowThemes(false) }} style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      padding: '7px 10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                      background: themeId === th.id ? 'rgba(255,255,255,0.08)' : 'transparent',
+                      color: '#fff', fontSize: '11px',
+                      fontFamily: "'DM Sans', sans-serif", textAlign: 'left',
+                    }}>
                       <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: th.accent, flexShrink: 0 }} />
                       {th.name}
                     </button>
@@ -351,25 +442,43 @@ await exportPDF(name)
             onClick={() => setShowAI(true)}
             whileHover={{ scale: 1.04, boxShadow: '0 0 20px rgba(201,168,76,0.3)' }}
             whileTap={{ scale: 0.96 }}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(201,168,76,0.35)', background: 'rgba(201,168,76,0.1)', color: '#c9a84c', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              padding: '6px 12px', borderRadius: '8px',
+              border: '1px solid rgba(201,168,76,0.35)',
+              background: 'rgba(201,168,76,0.1)', color: '#c9a84c',
+              fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+              fontFamily: "'DM Sans', sans-serif",
+            }}
           >
             <Sparkles size={13} />
             {!isTablet && 'AI Coach'}
           </motion.button>
 
           {/* Reset */}
-          <button onClick={resetCV}
-            style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={resetCV} style={{
+            width: '32px', height: '32px', borderRadius: '8px',
+            border: '1px solid rgba(255,255,255,0.1)', background: 'transparent',
+            color: 'rgba(255,255,255,0.4)', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
             <RefreshCw size={12} />
           </button>
 
           {/* Download PDF */}
           <motion.button
-            onClick={handleExport}
-            disabled={exporting}
+            onClick={handleExport} disabled={exporting}
             whileHover={{ scale: exporting ? 1 : 1.04 }}
             whileTap={{ scale: exporting ? 1 : 0.96 }}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '9px', border: 'none', cursor: exporting ? 'not-allowed' : 'pointer', background: exporting ? 'rgba(201,168,76,0.5)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)', color: '#1a1a2e', fontSize: '12px', fontWeight: 700, fontFamily: "'DM Sans', sans-serif", boxShadow: '0 2px 12px rgba(201,168,76,0.3)' }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '7px 14px', borderRadius: '9px', border: 'none',
+              cursor: exporting ? 'not-allowed' : 'pointer',
+              background: exporting ? 'rgba(201,168,76,0.5)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)',
+              color: '#1a1a2e', fontSize: '12px', fontWeight: 700,
+              fontFamily: "'DM Sans', sans-serif",
+              boxShadow: '0 2px 12px rgba(201,168,76,0.3)',
+            }}
           >
             <Download size={13} />
             {exporting ? 'Exporting…' : 'Download PDF'}
@@ -386,16 +495,23 @@ await exportPDF(name)
         />
       </div>
 
-      {/* Main content */}
+      {/* ── Main: form + preview ── */}
       <div
         style={{ flex: 1, display: 'flex', overflow: 'hidden' }}
         onClick={() => showThemes && setShowThemes(false)}
       >
+
         {/* Form panel */}
-        <div style={{ width: formWidth, flexShrink: 0, display: 'flex', flexDirection: 'column', background: '#1a1a2e', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{
+          width: formWidth, flexShrink: 0, display: 'flex', flexDirection: 'column',
+          background: '#1a1a2e', borderRight: '1px solid rgba(255,255,255,0.06)',
+        }}>
 
           {/* Panel header */}
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{
+            padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {(() => {
                 const Icon = STEPS[activeIndex].icon
@@ -414,14 +530,16 @@ await exportPDF(name)
             </span>
           </div>
 
-          {/* Scrollable form */}
+          {/* Scrollable form body */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
             <AnimatedStep stepKey={activeStep}>{renderStep()}</AnimatedStep>
           </div>
 
-          {/* Footer nav */}
-          <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#16162a', flexShrink: 0 }}>
-            {/* Progress dots */}
+          {/* Footer: progress dots + prev/next */}
+          <div style={{
+            padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.06)',
+            background: '#16162a', flexShrink: 0,
+          }}>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '5px', marginBottom: '12px' }}>
               {STEPS.map((_, i) => (
                 <motion.div
@@ -441,7 +559,13 @@ await exportPDF(name)
               <button
                 onClick={() => { if (activeIndex > 0) setActiveStep(STEPS[activeIndex - 1].id) }}
                 disabled={activeIndex === 0}
-                style={{ padding: '10px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', fontSize: '13px', cursor: activeIndex === 0 ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans', sans-serif", opacity: activeIndex === 0 ? 0.3 : 1 }}
+                style={{
+                  padding: '10px 16px', borderRadius: '10px',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)',
+                  fontSize: '13px', cursor: activeIndex === 0 ? 'not-allowed' : 'pointer',
+                  fontFamily: "'DM Sans', sans-serif", opacity: activeIndex === 0 ? 0.3 : 1,
+                }}
               >
                 ← Prev
               </button>
@@ -450,7 +574,14 @@ await exportPDF(name)
                 disabled={activeIndex === STEPS.length - 1}
                 whileHover={{ scale: activeIndex === STEPS.length - 1 ? 1 : 1.02 }}
                 whileTap={{ scale: 0.97 }}
-                style={{ flex: 1, padding: '11px', borderRadius: '10px', border: 'none', background: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)', color: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.25)' : '#1a1a2e', fontSize: '13px', fontWeight: 700, cursor: activeIndex === STEPS.length - 1 ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+                style={{
+                  flex: 1, padding: '11px', borderRadius: '10px', border: 'none',
+                  background: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)',
+                  color: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.25)' : '#1a1a2e',
+                  fontSize: '13px', fontWeight: 700,
+                  cursor: activeIndex === STEPS.length - 1 ? 'not-allowed' : 'pointer',
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
               >
                 {activeIndex === STEPS.length - 1 ? '✓ All Done' : 'Next Step →'}
               </motion.button>
@@ -458,13 +589,25 @@ await exportPDF(name)
           </div>
         </div>
 
-        {/* Preview panel */}
-        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', padding: isTablet ? '24px 16px' : '40px 32px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', background: 'linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%)' }}>
-          {isTablet
-            ? <TabletPreviewScaled cv={cv} template={template} theme={activeTheme} />
-            : <CVPreview cv={cv} template={template} theme={activeTheme} />
-          }
-        </div>
+        {/* ── Preview panel ── */}
+        {/* FIX: overflowY:auto + alignItems:flex-start ensures full CV is scrollable */}
+        <div style={{
+  flex: 1,
+  overflowY: 'auto',
+  overflowX: 'auto',
+  padding: isTablet ? '24px 16px 48px' : '40px 32px 64px',
+  background: 'linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%)',
+}}>
+  <div style={{
+    width: 'fit-content',
+    margin: '0 auto',
+  }}>
+    {isTablet
+      ? <TabletPreviewScaled cv={cv} template={template} theme={activeTheme} />
+      : <CVPreview cv={cv} template={template} theme={activeTheme} />
+    }
+  </div>
+</div>
       </div>
 
       {showAI && <AIModal cv={cv} onClose={() => setShowAI(false)} onApply={applyAI} />}
@@ -472,63 +615,105 @@ await exportPDF(name)
   )
 }
 
-// ── Mobile: auto-scale CV to screen width ──
+// ─────────────────────────────────────────────────────────────────
+// MobilePreviewScaled
+// Two-div approach: outer = visual height for scroll container
+//                  inner = absolute + transform:scale (no clipping)
+// ─────────────────────────────────────────────────────────────────
 function MobilePreviewScaled({ cv, template, theme }) {
   const [scale, setScale] = useState(1)
+  const [cvHeight, setCvHeight] = useState(1123)
 
   useEffect(() => {
     const update = () => {
-      const w = window.innerWidth - 32
-      setScale(w / 794)
+      const availableW = window.innerWidth - 32   // 16px padding each side
+      setScale(availableW / 794)
     }
     update()
     window.addEventListener('resize', update)
     return () => window.removeEventListener('resize', update)
   }, [])
 
+  useEffect(() => {
+    const el = document.getElementById('cv-preview')
+    if (!el) return
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setCvHeight(entry.target.offsetHeight || 1123)
+      }
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [cv, template])
+
+  const scaledH = Math.round(cvHeight * scale)   // Actual height × scale
+
   return (
-    <div style={{ width: '100%', overflow: 'hidden' }}>
-      <div style={{ height: `${1122 * scale}px`, position: 'relative' }}>
-        <div style={{
-          position: 'absolute', top: 0, left: 0,
-          transformOrigin: 'top left',
-          transform: `scale(${scale})`,
-          boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
-          borderRadius: '4px',
-        }}>
-          <CVPreview cv={cv} template={template} theme={theme} scaled={false} />
-        </div>
+    // Outer: tells scroll container the true visual height post-scale
+    <div style={{ width: '100%', minHeight: `${scaledH}px`, position: 'relative' }}>
+      {/* Inner: transform anchored top-left — overflow:visible so nothing clips */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0,
+        transformOrigin: 'top left',
+        transform: `scale(${scale})`,
+        width: '794px',
+        overflow: 'visible',
+        boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+        borderRadius: '4px',
+      }}>
+        <CVPreview cv={cv} template={template} theme={theme} scaled={false} />
       </div>
     </div>
   )
 }
 
-// ── Tablet: scale CV to fit panel ──
+// ─────────────────────────────────────────────────────────────────
+// TabletPreviewScaled
+// Same two-div approach as MobilePreviewScaled
+// ─────────────────────────────────────────────────────────────────
 function TabletPreviewScaled({ cv, template, theme }) {
   const [scale, setScale] = useState(1)
+  const [cvHeight, setCvHeight] = useState(1123)
 
   useEffect(() => {
     const update = () => {
-      const panelWidth = window.innerWidth * 0.58 - 32
-      setScale(Math.min(panelWidth / 794, 1))
+      // Preview panel is ~58% of viewport minus padding
+      const panelW = window.innerWidth * 0.58 - 32
+      setScale(Math.min(panelW / 794, 1))
     }
     update()
     window.addEventListener('resize', update)
     return () => window.removeEventListener('resize', update)
   }, [])
 
+  useEffect(() => {
+    const el = document.getElementById('cv-preview')
+    if (!el) return
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setCvHeight(entry.target.offsetHeight || 1123)
+      }
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [cv, template])
+
+  const scaledH = Math.round(cvHeight * scale)
+
   return (
-    <div style={{ width: '100%', overflow: 'hidden' }}>
-      <div style={{ height: `${1122 * scale}px`, position: 'relative' }}>
-        <div style={{
-          position: 'absolute', top: 0, left: 0,
-          transformOrigin: 'top left',
-          transform: `scale(${scale})`,
-          boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
-          borderRadius: '4px',
-        }}>
-          <CVPreview cv={cv} template={template} theme={theme} scaled={false} />
-        </div>
+    // Outer: correct visual height for scroll
+    <div style={{ width: '100%', minHeight: `${scaledH}px`, position: 'relative' }}>
+      {/* Inner: scale from top-left, overflow visible */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0,
+        transformOrigin: 'top left',
+        transform: `scale(${scale})`,
+        width: '794px',
+        overflow: 'visible',
+        boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+        borderRadius: '4px',
+      }}>
+        <CVPreview cv={cv} template={template} theme={theme} scaled={false} />
       </div>
     </div>
   )
