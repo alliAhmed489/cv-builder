@@ -296,14 +296,19 @@ export default function App() {
           backdropFilter: 'blur(20px)',
           display: 'flex', gap: '10px', zIndex: 100,
         }}>
-          <motion.button onClick={() => setShowAI(true)} whileTap={{ scale: 0.95 }} style={{
+          <motion.button disabled style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
             padding: '13px', borderRadius: '12px',
-            border: '1px solid rgba(201,168,76,0.35)', background: 'rgba(201,168,76,0.1)',
-            color: '#c9a84c', fontSize: '13px', fontWeight: 700,
-            cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
+            border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)',
+            color: 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 700,
+            cursor: 'not-allowed', fontFamily: "'DM Sans', sans-serif",
           }}>
-            <Sparkles size={15} /> AI Coach
+            <Sparkles size={15} /> 
+            <span style={{ textDecoration: 'line-through' }}>AI Coach</span>
+            <span style={{
+              background: 'rgba(201,168,76,0.2)', color: '#c9a84c', 
+              fontSize: '10px', padding: '2px 6px', borderRadius: '6px', marginLeft: '2px', textDecoration: 'none'
+            }}>Updating</span>
           </motion.button>
 
           <motion.button onClick={handleExport} disabled={exporting} whileTap={{ scale: 0.95 }} style={{
@@ -446,20 +451,22 @@ export default function App() {
 
           {/* AI Coach */}
           <motion.button
-            onClick={() => setShowAI(true)}
-            whileHover={{ scale: 1.04, boxShadow: '0 0 20px rgba(201,168,76,0.3)' }}
-            whileTap={{ scale: 0.96 }}
+            disabled
             style={{
               display: 'flex', alignItems: 'center', gap: '5px',
               padding: '6px 12px', borderRadius: '8px',
-              border: '1px solid rgba(201,168,76,0.35)',
-              background: 'rgba(201,168,76,0.1)', color: '#c9a84c',
-              fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)',
+              fontSize: '12px', fontWeight: 600, cursor: 'not-allowed',
               fontFamily: "'DM Sans', sans-serif",
             }}
           >
             <Sparkles size={13} />
-            {!isTablet && 'AI Coach'}
+            {!isTablet && <span style={{ textDecoration: 'line-through' }}>AI Coach</span>}
+            <span style={{
+              background: 'rgba(201,168,76,0.2)', color: '#c9a84c', 
+              fontSize: '9px', padding: '1px 5px', borderRadius: '4px', marginLeft: '2px', textDecoration: 'none'
+            }}>Updating</span>
           </motion.button>
 
           {/* Reset */}
