@@ -1,9 +1,11 @@
 import { useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Camera, X } from 'lucide-react'
 import { Input } from '../ui/Input.jsx'
 
 export function PersonalForm({ personal, updatePersonal }) {
+  const { t } = useTranslation()
   const fileRef = useRef(null)
   const initials = (personal.name || 'CV').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
   const p = field => e => updatePersonal(field, e.target.value)
@@ -32,8 +34,8 @@ export function PersonalForm({ personal, updatePersonal }) {
           }
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: '0 0 2px', fontSize: '12px', fontWeight: 600, color: '#fff' }}>Profile Photo</p>
-          <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>Optional · JPG or PNG</p>
+          <p style={{ margin: '0 0 2px', fontSize: '12px', fontWeight: 600, color: '#fff' }}>{t('personal.photo')}</p>
+          <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>{t('personal.photo_hint')}</p>
         </div>
         <div style={{ display: 'flex', gap: '6px' }}>
           {personal.photo && (
@@ -44,20 +46,20 @@ export function PersonalForm({ personal, updatePersonal }) {
           )}
           <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }} type="button" onClick={() => fileRef.current?.click()}
             style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 13px', height: '32px', borderRadius: '9px', border: 'none', background: 'linear-gradient(135deg, #c9a84c, #e8cc7a)', color: '#1a1a2e', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
-            <Camera size={12} /> {personal.photo ? 'Change' : 'Upload'}
+            <Camera size={12} /> {personal.photo ? t('personal.change') : t('personal.upload')}
           </motion.button>
         </div>
         <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
       </motion.div>
 
-      <Input dark label="Full Name"          id="pf-name"    value={personal.name}    onChange={p('name')}    placeholder="Mostfa Ahmed" />
-      <Input dark label="Job Title"          id="pf-title"   value={personal.title}   onChange={p('title')}   placeholder="Senior Product Designer" />
+      <Input dark label={t('personal.full_name')}          id="pf-name"    value={personal.name}    onChange={p('name')}    placeholder={t('personal.name_placeholder')} />
+      <Input dark label={t('personal.job_title')}          id="pf-title"   value={personal.title}   onChange={p('title')}   placeholder={t('personal.title_placeholder')} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <Input dark label="Email" id="pf-email" type="email" value={personal.email} onChange={p('email')} placeholder="you@email.com" />
-        <Input dark label="Phone" id="pf-phone" type="tel"   value={personal.phone} onChange={p('phone')} placeholder="+20 10 1234 5678" />
+        <Input dark label={t('personal.email')} id="pf-email" type="email" value={personal.email} onChange={p('email')} placeholder={t('personal.email_placeholder')} />
+        <Input dark label={t('personal.phone')} id="pf-phone" type="tel"   value={personal.phone} onChange={p('phone')} placeholder={t('personal.phone_placeholder')} />
       </div>
-      <Input dark label="Address"            id="pf-address" value={personal.address} onChange={p('address')} placeholder="Cairo, Egypt" />
-      <Input dark label="Website / LinkedIn" id="pf-website" value={personal.website} onChange={p('website')} placeholder="linkedin.com/in/yourname" />
+      <Input dark label={t('personal.address')}            id="pf-address" value={personal.address} onChange={p('address')} placeholder={t('personal.address_placeholder')} />
+      <Input dark label={t('personal.website')} id="pf-website" value={personal.website} onChange={p('website')} placeholder={t('personal.website_placeholder')} />
     </div>
   )
 }

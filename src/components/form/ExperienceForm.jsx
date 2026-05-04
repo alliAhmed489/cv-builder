@@ -1,9 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '../ui/Input.jsx'
 import { SectionCard } from '../ui/SectionCard.jsx'
 
 export function ExperienceForm({ experience, addExperience, updateExperience, removeExperience }) {
+  const { t } = useTranslation()
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -16,8 +20,8 @@ export function ExperienceForm({ experience, addExperience, updateExperience, re
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           style={{ textAlign: 'center', padding: '32px 16px', borderRadius: '14px', border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}
         >
-          <p style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>No experience added</p>
-          <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255,255,255,0.25)' }}>Click below to add your first role</p>
+          <p style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>{t('experience.empty')}</p>
+          <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255,255,255,0.25)' }}>{t('experience.empty_hint')}</p>
         </motion.div>
       )}
 
@@ -26,23 +30,23 @@ export function ExperienceForm({ experience, addExperience, updateExperience, re
         {experience.map((exp, idx) => (
           <SectionCard
             key={exp.id}
-            title={exp.role || 'New Position'}
+            title={exp.role || t('experience.new_position')}
             subtitle={exp.company}
             onRemove={() => removeExperience(exp.id)}
             defaultOpen={idx === 0}
           >
-            <Input dark label="Company" id={`ec-${exp.id}`}
+            <Input dark label={t('experience.company')} id={`ec-${exp.id}`}
               value={exp.company} onChange={e => updateExperience(exp.id, 'company', e.target.value)}
-              placeholder="Google" />
+              placeholder={t('experience.company_placeholder')} />
 
-            <Input dark label="Job Title" id={`er-${exp.id}`}
+            <Input dark label={t('experience.role')} id={`er-${exp.id}`}
               value={exp.role} onChange={e => updateExperience(exp.id, 'role', e.target.value)}
-              placeholder="Senior Software Engineer" />
+              placeholder={t('experience.role_placeholder')} />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <Input dark label="Start Date" id={`es-${exp.id}`} type="month"
+              <Input dark label={t('experience.start_date')} id={`es-${exp.id}`} type="month"
                 value={exp.start} onChange={e => updateExperience(exp.id, 'start', e.target.value)} />
-              <Input dark label="End Date" id={`ee-${exp.id}`} type="month"
+              <Input dark label={t('experience.end_date')} id={`ee-${exp.id}`} type="month"
                 value={exp.end} onChange={e => updateExperience(exp.id, 'end', e.target.value)} />
             </div>
 
@@ -63,14 +67,14 @@ export function ExperienceForm({ experience, addExperience, updateExperience, re
                 />
               </div>
               <span style={{ fontSize: '12px', color: exp.current ? '#c9a84c' : 'rgba(255,255,255,0.45)' }}>
-                Currently working here
+                {t('experience.current')}
               </span>
             </label>
 
-            <Input dark label="Responsibilities & Achievements" id={`ed-${exp.id}`}
+            <Input dark label={t('experience.description')} id={`ed-${exp.id}`}
               value={exp.description}
               onChange={e => updateExperience(exp.id, 'description', e.target.value)}
-              placeholder={"• Led redesign of dashboard, reducing tickets by 34%.\n• Managed a team of 4 designers across 3 squads."}
+              placeholder={t('experience.description_placeholder')}
               rows={5}
               hint="Start each line with • for best formatting" />
           </SectionCard>
@@ -90,7 +94,7 @@ export function ExperienceForm({ experience, addExperience, updateExperience, re
           marginTop: '4px', transition: 'all 0.2s ease', width: '100%',
         }}
       >
-        <Plus size={15} /> Add Experience
+        <Plus size={15} /> {t('experience.add')}
       </motion.button>
     </motion.div>
   )

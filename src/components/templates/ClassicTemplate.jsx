@@ -1,4 +1,5 @@
 import { dateRange } from '../../utils/formatDate.js'
+import { useTranslation } from 'react-i18next'
 
 // ── Default theme fallback (navy/gold) ──
 const DEFAULT_THEME = {
@@ -46,8 +47,9 @@ function ContactBadge({ icon, value }) {
 
 // ── Main component ──
 export function ClassicTemplate({ cv, theme }) {
+  const { t } = useTranslation()
   // Always merge with defaults so missing keys never crash
-  const t = { ...DEFAULT_THEME, ...theme }
+  const th = { ...DEFAULT_THEME, ...theme }
   const p = cv.personal
 
   const initials = (p.name || 'CV')
@@ -63,7 +65,7 @@ export function ClassicTemplate({ cv, theme }) {
 
       {/* ══ HEADER ══ */}
       <header style={{
-        background: t.headerBg,
+        background: th.headerBg,
         padding: '36px 44px',
         display: 'flex',
         alignItems: 'center',
@@ -76,7 +78,7 @@ export function ClassicTemplate({ cv, theme }) {
           border: '2px solid rgba(255,255,255,0.2)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontFamily: 'Georgia, serif',
-          fontSize: '26px', color: t.accent,
+          fontSize: '26px', color: th.accent,
           flexShrink: 0, overflow: 'hidden',
         }}>
           {p.photo
@@ -90,15 +92,15 @@ export function ClassicTemplate({ cv, theme }) {
           <h1 style={{
             fontFamily: 'Georgia, "Times New Roman", serif',
             fontSize: '30px',
-            color: t.headerText,
+            color: th.headerText,
             margin: 0, lineHeight: 1.1,
           }}>
-            {p.name || 'Your Name'}
+            {p.name || t('templates.name_placeholder')}
           </h1>
 
           {p.title && (
             <p style={{
-              fontSize: '12px', color: t.accent,
+              fontSize: '12px', color: th.accent,
               marginTop: '5px', fontWeight: 400,
               letterSpacing: '1.5px', textTransform: 'uppercase',
             }}>
@@ -123,7 +125,7 @@ export function ClassicTemplate({ cv, theme }) {
 
           {cv.summary && (
             <section style={{ marginBottom: '28px' }}>
-              <SectionHeading theme={t}>Professional Summary</SectionHeading>
+              <SectionHeading theme={th}>{t('templates.summary')}</SectionHeading>
               <p style={{ fontSize: '12px', color: '#555', lineHeight: 1.75, margin: 0 }}>
                 {cv.summary}
               </p>
@@ -132,13 +134,13 @@ export function ClassicTemplate({ cv, theme }) {
 
           {cv.experience.length > 0 && (
             <section style={{ marginBottom: '28px' }}>
-              <SectionHeading theme={t}>Work Experience</SectionHeading>
+              <SectionHeading theme={th}>{t('templates.experience')}</SectionHeading>
               {cv.experience.map((exp, idx) => (
                 <div key={exp.id} style={{ marginBottom: idx < cv.experience.length - 1 ? '20px' : 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <p style={{ fontSize: '13px', fontWeight: 600, color: t.primary, margin: 0 }}>
-                        {exp.role || 'Role'}
+                      <p style={{ fontSize: '13px', fontWeight: 600, color: th.primary, margin: 0 }}>
+                        {exp.role || t('templates.role_placeholder')}
                       </p>
                       {exp.company && (
                         <p style={{ fontSize: '11px', color: '#888', fontStyle: 'italic', marginTop: '2px', marginBottom: 0 }}>
@@ -171,7 +173,7 @@ export function ClassicTemplate({ cv, theme }) {
 
           {cv.experience.length === 0 && !cv.summary && (
             <p style={{ fontSize: '12px', color: '#ccc', fontStyle: 'italic' }}>
-              Fill in the form on the left to populate your CV.
+              {t('templates.empty_text')}
             </p>
           )}
         </div>
@@ -181,10 +183,10 @@ export function ClassicTemplate({ cv, theme }) {
 
           {cv.education.length > 0 && (
             <section style={{ marginBottom: '24px' }}>
-              <SectionHeading theme={t}>Education</SectionHeading>
+              <SectionHeading theme={th}>{t('templates.education')}</SectionHeading>
               {cv.education.map((edu, idx) => (
                 <div key={edu.id} style={{ marginBottom: idx < cv.education.length - 1 ? '14px' : 0 }}>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: t.primary, margin: 0 }}>
+                  <p style={{ fontSize: '12px', fontWeight: 600, color: th.primary, margin: 0 }}>
                     {edu.institution}
                   </p>
                   <p style={{ fontSize: '11px', color: '#777', fontStyle: 'italic', margin: '2px 0 0' }}>
@@ -203,14 +205,14 @@ export function ClassicTemplate({ cv, theme }) {
 
           {cv.skills.length > 0 && (
             <section style={{ marginBottom: '24px' }}>
-              <SectionHeading theme={t}>Skills</SectionHeading>
+              <SectionHeading theme={th}>{t('templates.skills')}</SectionHeading>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                 {cv.skills.map(s => (
                   <span key={s} style={{
                     fontSize: '10px', padding: '3px 9px',
-                    background: t.accentLight,
+                    background: th.accentLight,
                     borderRadius: '10px',
-                    color: t.primary,
+                    color: th.primary,
                   }}>
                     {s}
                   </span>
@@ -221,7 +223,7 @@ export function ClassicTemplate({ cv, theme }) {
 
           {cv.languages.length > 0 && (
             <section>
-              <SectionHeading theme={t}>Languages</SectionHeading>
+              <SectionHeading theme={th}>{t('templates.languages')}</SectionHeading>
               {cv.languages.map(l => (
                 <div key={l.id} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -230,7 +232,7 @@ export function ClassicTemplate({ cv, theme }) {
                   <span style={{ color: '#333' }}>{l.name}</span>
                   <span style={{
                     fontSize: '10px', padding: '1px 7px',
-                    background: t.accentLight, color: t.primary,
+                    background: th.accentLight, color: th.primary,
                     borderRadius: '10px',
                   }}>
                     {l.level}

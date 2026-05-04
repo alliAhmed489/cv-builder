@@ -1,9 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '../ui/Input.jsx'
 import { SectionCard } from '../ui/SectionCard.jsx'
 
 export function EducationForm({ education, addEducation, updateEducation, removeEducation }) {
+  const { t } = useTranslation()
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -16,8 +18,8 @@ export function EducationForm({ education, addEducation, updateEducation, remove
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           style={{ textAlign: 'center', padding: '32px 16px', borderRadius: '14px', border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}
         >
-          <p style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>No education added</p>
-          <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255,255,255,0.25)' }}>Add your degrees and qualifications</p>
+          <p style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>{t('education.empty')}</p>
+          <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255,255,255,0.25)' }}>{t('education.empty_hint')}</p>
         </motion.div>
       )}
 
@@ -26,40 +28,40 @@ export function EducationForm({ education, addEducation, updateEducation, remove
         {education.map((edu, idx) => (
           <SectionCard
             key={edu.id}
-            title={edu.institution || 'Institution'}
+            title={edu.institution || t('education.institution')}
             subtitle={[edu.degree, edu.field].filter(Boolean).join(' in ')}
             onRemove={() => removeEducation(edu.id)}
             defaultOpen={idx === 0}
           >
-            <Input dark label="Institution" id={`ei-${edu.id}`}
+            <Input dark label={t('education.institution')} id={`ei-${edu.id}`}
               value={edu.institution}
               onChange={e => updateEducation(edu.id, 'institution', e.target.value)}
-              placeholder="Cairo University" />
+              placeholder={t('education.institution_placeholder')} />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <Input dark label="Degree" id={`ed-${edu.id}`}
+              <Input dark label={t('education.degree')} id={`ed-${edu.id}`}
                 value={edu.degree}
                 onChange={e => updateEducation(edu.id, 'degree', e.target.value)}
-                placeholder="Bachelor's" />
-              <Input dark label="Field of Study" id={`ef-${edu.id}`}
+                placeholder={t('education.degree_placeholder')} />
+              <Input dark label={t('education.field')} id={`ef-${edu.id}`}
                 value={edu.field}
                 onChange={e => updateEducation(edu.id, 'field', e.target.value)}
-                placeholder="Computer Science" />
+                placeholder={t('education.field_placeholder')} />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <Input dark label="Start Date" id={`es-${edu.id}`} type="month"
+              <Input dark label={t('education.start_date')} id={`es-${edu.id}`} type="month"
                 value={edu.start}
                 onChange={e => updateEducation(edu.id, 'start', e.target.value)} />
-              <Input dark label="End Date" id={`ee-${edu.id}`} type="month"
+              <Input dark label={t('education.end_date')} id={`ee-${edu.id}`} type="month"
                 value={edu.end}
                 onChange={e => updateEducation(edu.id, 'end', e.target.value)} />
             </div>
 
-            <Input dark label="GPA (optional)" id={`eg-${edu.id}`}
+            <Input dark label={t('education.gpa')} id={`eg-${edu.id}`}
               value={edu.gpa}
               onChange={e => updateEducation(edu.id, 'gpa', e.target.value)}
-              placeholder="3.92 / 4.00" />
+              placeholder={t('education.gpa_placeholder')} />
           </SectionCard>
         ))}
       </AnimatePresence>
@@ -77,7 +79,7 @@ export function EducationForm({ education, addEducation, updateEducation, remove
           marginTop: '4px', transition: 'all 0.2s ease', width: '100%',
         }}
       >
-        <Plus size={15} /> Add Education
+        <Plus size={15} /> {t('education.add')}
       </motion.button>
     </motion.div>
   )

@@ -1,4 +1,5 @@
 import { dateRange } from '../../utils/formatDate.js'
+import { useTranslation } from 'react-i18next'
 
 // ── Default theme fallback ──
 const DEFAULT_THEME = {
@@ -26,11 +27,12 @@ function SectionHeading({ children, theme }) {
 }
 
 export function ExecutiveTemplate({ cv, theme }) {
-  const t = { ...DEFAULT_THEME, ...theme }
+  const { t } = useTranslation()
+  const th = { ...DEFAULT_THEME, ...theme }
   const p = cv.personal
 
   const initials = (p.name || 'CV').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-  const firstName = (p.name || 'Your Name').split(' ')[0]
+  const firstName = (p.name || t('templates.name_placeholder')).split(' ')[0]
   const lastName  = (p.name || '').split(' ').slice(1).join(' ')
 
   return (
@@ -40,16 +42,16 @@ export function ExecutiveTemplate({ cv, theme }) {
     }}>
 
       {/* ══ HEADER ══ */}
-      <header style={{ display: 'flex', borderBottom: `3px solid ${t.primary}` }}>
+      <header style={{ display: 'flex', borderBottom: `3px solid ${th.primary}` }}>
 
         {/* Left — name */}
         <div style={{ flex: 1, padding: '40px 36px 32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-            <div style={{ width: '32px', height: '3px', background: t.accent }} />
+            <div style={{ width: '32px', height: '3px', background: th.accent }} />
             {p.title && (
               <span style={{
                 fontSize: '10px', letterSpacing: '3px',
-                textTransform: 'uppercase', color: t.accent, fontWeight: 600,
+                textTransform: 'uppercase', color: th.accent, fontWeight: 600,
               }}>
                 {p.title}
               </span>
@@ -57,14 +59,14 @@ export function ExecutiveTemplate({ cv, theme }) {
           </div>
           <h1 style={{
             fontFamily: 'Georgia, "Times New Roman", serif',
-            fontSize: '42px', color: t.primary,
+            fontSize: '42px', color: th.primary,
             margin: 0, lineHeight: 1, letterSpacing: '-1px', fontWeight: 700,
           }}>
             {firstName}
           </h1>
           <h1 style={{
             fontFamily: 'Georgia, "Times New Roman", serif',
-            fontSize: '42px', color: t.accent,
+            fontSize: '42px', color: th.accent,
             margin: 0, lineHeight: 1.1, letterSpacing: '-1px', fontWeight: 700,
           }}>
             {lastName}
@@ -79,10 +81,10 @@ export function ExecutiveTemplate({ cv, theme }) {
           display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center',
         }}>
           {p.photo
-            ? <img src={p.photo} alt="" style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: `2px solid ${t.primary}`, marginBottom: '8px' }} />
+            ? <img src={p.photo} alt="" style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: `2px solid ${th.primary}`, marginBottom: '8px' }} />
             : (
-              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: t.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
-                <span style={{ fontFamily: 'Georgia, serif', fontSize: '18px', color: t.accent, fontWeight: 700 }}>{initials}</span>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: th.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
+                <span style={{ fontFamily: 'Georgia, serif', fontSize: '18px', color: th.accent, fontWeight: 700 }}>{initials}</span>
               </div>
             )
           }
@@ -98,27 +100,27 @@ export function ExecutiveTemplate({ cv, theme }) {
 
         {cv.summary && (
           <div style={{ marginBottom: '32px' }}>
-            <SectionHeading theme={t}>Profile</SectionHeading>
+            <SectionHeading theme={th}>{t('templates.summary')}</SectionHeading>
             <p style={{ fontSize: '12.5px', color: '#444', lineHeight: 1.8, margin: 0 }}>{cv.summary}</p>
           </div>
         )}
 
         {cv.experience.length > 0 && (
           <div style={{ marginBottom: '32px' }}>
-            <SectionHeading theme={t}>Professional Experience</SectionHeading>
+            <SectionHeading theme={th}>{t('templates.experience')}</SectionHeading>
             {cv.experience.map((exp, idx) => (
               <div key={exp.id} style={{
                 display: 'grid', gridTemplateColumns: '160px 1fr',
                 gap: '0 24px', marginBottom: idx < cv.experience.length - 1 ? '24px' : 0,
               }}>
                 <div style={{ paddingTop: '2px' }}>
-                  <p style={{ fontSize: '11px', color: t.accent, fontWeight: 600, margin: '0 0 4px' }}>
+                  <p style={{ fontSize: '11px', color: th.accent, fontWeight: 600, margin: '0 0 4px' }}>
                     {dateRange(exp.start, exp.end, exp.current)}
                   </p>
                   <p style={{ fontSize: '11px', color: '#888', margin: 0, fontStyle: 'italic' }}>{exp.company}</p>
                 </div>
-                <div style={{ borderLeft: `2px solid ${t.accentLight}`, paddingLeft: '20px' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 700, color: t.primary, margin: '0 0 6px' }}>{exp.role}</p>
+                <div style={{ borderLeft: `2px solid ${th.accentLight}`, paddingLeft: '20px' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: th.primary, margin: '0 0 6px' }}>{exp.role}</p>
                   {exp.description && (
                     <div style={{ fontSize: '11.5px', color: '#555', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
                       {exp.description}
@@ -132,20 +134,20 @@ export function ExecutiveTemplate({ cv, theme }) {
 
         {cv.education.length > 0 && (
           <div style={{ marginBottom: '32px' }}>
-            <SectionHeading theme={t}>Education</SectionHeading>
+            <SectionHeading theme={th}>{t('templates.education')}</SectionHeading>
             {cv.education.map((edu, idx) => (
               <div key={edu.id} style={{
                 display: 'grid', gridTemplateColumns: '160px 1fr',
                 gap: '0 24px', marginBottom: idx < cv.education.length - 1 ? '16px' : 0,
               }}>
                 <div style={{ paddingTop: '2px' }}>
-                  <p style={{ fontSize: '11px', color: t.accent, fontWeight: 600, margin: '0 0 4px' }}>
+                  <p style={{ fontSize: '11px', color: th.accent, fontWeight: 600, margin: '0 0 4px' }}>
                     {dateRange(edu.start, edu.end, false)}
                   </p>
                   {edu.gpa && <p style={{ fontSize: '10px', color: '#aaa', margin: 0 }}>GPA {edu.gpa}</p>}
                 </div>
-                <div style={{ borderLeft: `2px solid ${t.accentLight}`, paddingLeft: '20px' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 700, color: t.primary, margin: '0 0 3px' }}>
+                <div style={{ borderLeft: `2px solid ${th.accentLight}`, paddingLeft: '20px' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: th.primary, margin: '0 0 3px' }}>
                     {[edu.degree, edu.field].filter(Boolean).join(' in ')}
                   </p>
                   <p style={{ fontSize: '11px', color: '#888', margin: 0, fontStyle: 'italic' }}>{edu.institution}</p>
@@ -159,13 +161,13 @@ export function ExecutiveTemplate({ cv, theme }) {
           <div style={{ display: 'grid', gridTemplateColumns: cv.languages.length > 0 ? '1fr 200px' : '1fr', gap: '32px' }}>
             {cv.skills.length > 0 && (
               <div>
-                <SectionHeading theme={t}>Core Skills</SectionHeading>
+                <SectionHeading theme={th}>{t('templates.skills')}</SectionHeading>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {cv.skills.map(s => (
                     <span key={s} style={{
                       fontSize: '11px', padding: '4px 12px',
-                      border: `1px solid ${t.primary}`,
-                      borderRadius: '2px', color: t.primary, fontWeight: 500,
+                      border: `1px solid ${th.primary}`,
+                      borderRadius: '2px', color: th.primary, fontWeight: 500,
                     }}>
                       {s}
                     </span>
@@ -175,13 +177,13 @@ export function ExecutiveTemplate({ cv, theme }) {
             )}
             {cv.languages.length > 0 && (
               <div>
-                <SectionHeading theme={t}>Languages</SectionHeading>
+                <SectionHeading theme={th}>{t('templates.languages')}</SectionHeading>
                 {cv.languages.map(l => (
                   <div key={l.id} style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     padding: '5px 0', borderBottom: '1px solid #f0f0f0', fontSize: '12px',
                   }}>
-                    <span style={{ color: t.primary, fontWeight: 500 }}>{l.name}</span>
+                    <span style={{ color: th.primary, fontWeight: 500 }}>{l.name}</span>
                     <span style={{ fontSize: '10px', color: '#888' }}>{l.level}</span>
                   </div>
                 ))}

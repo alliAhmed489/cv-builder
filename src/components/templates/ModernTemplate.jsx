@@ -1,4 +1,5 @@
 import { dateRange } from '../../utils/formatDate.js'
+import { useTranslation } from 'react-i18next'
 
 // ── Default theme fallback ──
 const DEFAULT_THEME = {
@@ -41,7 +42,8 @@ function EntryBlock({ children, theme }) {
 
 // ── Main component ──
 export function ModernTemplate({ cv, theme }) {
-  const t = { ...DEFAULT_THEME, ...theme }
+  const { t } = useTranslation()
+  const th = { ...DEFAULT_THEME, ...theme }
   const p = cv.personal
 
   const initials = (p.name || 'CV')
@@ -54,15 +56,15 @@ export function ModernTemplate({ cv, theme }) {
     }}>
 
       {/* ══ HEADER ══ */}
-      <header style={{ padding: '40px 48px 28px', borderBottom: `3px solid ${t.primary}` }}>
+      <header style={{ padding: '40px 48px 28px', borderBottom: `3px solid ${th.primary}` }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px' }}>
 
           {/* Avatar */}
           <div style={{
             width: '80px', height: '80px', borderRadius: '50%', flexShrink: 0,
-            background: t.primary,
+            background: th.primary,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'Georgia, serif', fontSize: '28px', color: t.accent,
+            fontFamily: 'Georgia, serif', fontSize: '28px', color: th.accent,
             overflow: 'hidden',
           }}>
             {p.photo
@@ -75,14 +77,14 @@ export function ModernTemplate({ cv, theme }) {
           <div style={{ flex: 1 }}>
             <h1 style={{
               fontFamily: 'Georgia, "Times New Roman", serif',
-              fontSize: '34px', color: t.primary, margin: 0, lineHeight: 1.05,
+              fontSize: '34px', color: th.primary, margin: 0, lineHeight: 1.05,
             }}>
-              {p.name || 'Your Name'}
+              {p.name || t('templates.name_placeholder')}
             </h1>
 
             {p.title && (
               <p style={{
-                fontSize: '11px', color: t.accent,
+                fontSize: '11px', color: th.accent,
                 fontWeight: 700, letterSpacing: '2px',
                 textTransform: 'uppercase', margin: '6px 0 0',
               }}>
@@ -105,7 +107,7 @@ export function ModernTemplate({ cv, theme }) {
 
         {cv.summary && (
           <section>
-            <SectionHeading theme={t}>Profile</SectionHeading>
+            <SectionHeading theme={th}>{t('templates.summary')}</SectionHeading>
             <p style={{ fontSize: '12px', color: '#555', lineHeight: 1.78, margin: 0 }}>
               {cv.summary}
             </p>
@@ -114,13 +116,13 @@ export function ModernTemplate({ cv, theme }) {
 
         {cv.experience.length > 0 && (
           <section>
-            <SectionHeading theme={t}>Work Experience</SectionHeading>
+            <SectionHeading theme={th}>{t('templates.experience')}</SectionHeading>
             {cv.experience.map(exp => (
-              <EntryBlock key={exp.id} theme={t}>
+              <EntryBlock key={exp.id} theme={th}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: t.primary }}>
-                      {exp.role || 'Role'}
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: th.primary }}>
+                      {exp.role || t('templates.role_placeholder')}
                     </span>
                     {exp.company && (
                       <span style={{ fontSize: '12px', color: '#888', marginLeft: '6px' }}>
@@ -144,13 +146,13 @@ export function ModernTemplate({ cv, theme }) {
 
         {cv.education.length > 0 && (
           <section>
-            <SectionHeading theme={t}>Education</SectionHeading>
+            <SectionHeading theme={th}>{t('templates.education')}</SectionHeading>
             {cv.education.map(edu => (
-              <EntryBlock key={edu.id} theme={t}>
+              <EntryBlock key={edu.id} theme={th}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: t.primary, margin: 0 }}>
-                      {[edu.degree, edu.field].filter(Boolean).join(' in ') || 'Degree'}
+                    <p style={{ fontSize: '12px', fontWeight: 600, color: th.primary, margin: 0 }}>
+                      {[edu.degree, edu.field].filter(Boolean).join(' in ') || t('education.degree_placeholder')}
                     </p>
                     <p style={{ fontSize: '11px', color: '#777', margin: '2px 0 0' }}>
                       {edu.institution}{edu.gpa ? ` · GPA ${edu.gpa}` : ''}
@@ -169,14 +171,14 @@ export function ModernTemplate({ cv, theme }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
             {cv.skills.length > 0 && (
               <section>
-                <SectionHeading theme={t}>Skills</SectionHeading>
+                <SectionHeading theme={th}>{t('templates.skills')}</SectionHeading>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                   {cv.skills.map(s => (
                     <span key={s} style={{
                       fontSize: '10px', padding: '3px 10px',
-                      background: t.accentLight,
-                      border: `1px solid ${t.accent}`,
-                      borderRadius: '12px', color: t.primary,
+                      background: th.accentLight,
+                      border: `1px solid ${th.accent}`,
+                      borderRadius: '12px', color: th.primary,
                     }}>
                       {s}
                     </span>
@@ -186,14 +188,14 @@ export function ModernTemplate({ cv, theme }) {
             )}
             {cv.languages.length > 0 && (
               <section>
-                <SectionHeading theme={t}>Languages</SectionHeading>
+                <SectionHeading theme={th}>{t('templates.languages')}</SectionHeading>
                 {cv.languages.map(l => (
                   <div key={l.id} style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     padding: '5px 0', borderBottom: '1px solid #f4f4f4', fontSize: '11px',
                   }}>
                     <span style={{ color: '#333' }}>{l.name}</span>
-                    <span style={{ fontSize: '10px', color: t.accent, fontWeight: 600 }}>{l.level}</span>
+                    <span style={{ fontSize: '10px', color: th.accent, fontWeight: 600 }}>{l.level}</span>
                   </div>
                 ))}
               </section>
@@ -203,7 +205,7 @@ export function ModernTemplate({ cv, theme }) {
 
         {!cv.summary && cv.experience.length === 0 && cv.education.length === 0 && (
           <p style={{ fontSize: '12px', color: '#ccc', fontStyle: 'italic', textAlign: 'center', padding: '40px 0' }}>
-            Start filling in the form on the left — your CV will appear here instantly.
+            {t('templates.empty_text')}
           </p>
         )}
       </div>

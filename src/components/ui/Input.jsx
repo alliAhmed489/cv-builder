@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 
 export function Input({
   label, id, type = 'text', value, onChange,
-  placeholder = '', rows, hint = '', dark = false,
+  placeholder = '', rows, hint = '', dark = false, optional = false,
 }) {
+  const { t } = useTranslation()
   const [focused, setFocused] = useState(false)
 
   // ── Dark mode input (for left panel) ──
@@ -38,20 +39,22 @@ export function Input({
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
         {label && (
-          <motion.label
+          <label
             htmlFor={id}
-            animate={{ color: focused ? '#c9a84c' : 'rgba(255,255,255,0.4)' }}
-            transition={{ duration: 0.2 }}
             style={{
               fontSize: '10px',
               fontWeight: 700,
               letterSpacing: '1.2px',
               textTransform: 'uppercase',
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
             }}
           >
             {label}
-          </motion.label>
+            {optional && <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400, fontSize: '10px', textTransform: 'none', letterSpacing: 'normal' }}> {t('app.optional')}</span>}
+          </label>
         )}
 
         {rows ? (

@@ -1,0 +1,127 @@
+{
+  "app": {
+    "title": "CVcraft",
+    "edit": "تعديل",
+    "preview": "معاينة",
+    "prev": "السابق",
+    "next": "التالي",
+    "next_step": "الخطوة التالية ←",
+    "done": "✓ اكتمل",
+    "all_done": "✓ اكتمل بالكامل",
+    "download_pdf": "تحميل PDF",
+    "exporting": "جاري التحميل…",
+    "ai_coach": "المساعد الذكي",
+    "updating": "قيد التحديث",
+    "export_failed": "فشل التحميل. يرجى المحاولة مرة أخرى.",
+    "optional": "(اختياري)",
+    "untitled": "بدون عنوان"
+  },
+  "steps": {
+    "personal": "شخصي",
+    "summary": "ملخص",
+    "experience": "الخبرة",
+    "education": "التعليم",
+    "skills": "المهارات",
+    "languages": "اللغات"
+  },
+  "personal": {
+    "photo": "الصورة الشخصية",
+    "photo_hint": "اختياري · JPG أو PNG",
+    "change": "تغيير",
+    "upload": "رفع",
+    "full_name": "الاسم الكامل",
+    "name_placeholder": "مصطفى أحمد",
+    "job_title": "المسمى الوظيفي",
+    "title_placeholder": "مصمم منتجات أول",
+    "email": "البريد الإلكتروني",
+    "email_placeholder": "you@email.com",
+    "phone": "رقم الهاتف",
+    "phone_placeholder": "+20 10 1234 5678",
+    "address": "العنوان",
+    "address_placeholder": "القاهرة، مصر",
+    "website": "الموقع / لينكد إن",
+    "website_placeholder": "linkedin.com/in/yourname"
+  },
+  "summary": {
+    "title": "الملخص المهني",
+    "placeholder": "اكتب ملخصًا قصيرًا عن خلفيتك وأهدافك..."
+  },
+  "experience": {
+    "add": "إضافة خبرة",
+    "empty": "لم يتم إضافة أي خبرة",
+    "empty_hint": "انقر أدناه لإضافة دورك الأول",
+    "new_position": "منصب جديد",
+    "role": "الدور",
+    "role_placeholder": "مهندس برمجيات",
+    "company": "الشركة",
+    "company_placeholder": "جوجل",
+    "start_date": "تاريخ البدء",
+    "end_date": "تاريخ الانتهاء",
+    "current": "أعمل هنا حاليًا",
+    "description": "الوصف",
+    "description_placeholder": "صف مسؤولياتك وإنجازاتك..."
+  },
+  "education": {
+    "add": "إضافة تعليم",
+    "empty": "لم يتم إضافة أي تعليم",
+    "empty_hint": "أضف درجاتك ومؤهلاتك",
+    "institution": "المؤسسة التعليمية",
+    "institution_placeholder": "جامعة القاهرة",
+    "degree": "الدرجة العلمية",
+    "degree_placeholder": "بكالوريوس",
+    "field": "مجال الدراسة",
+    "field_placeholder": "علوم الحاسب",
+    "gpa": "المعدل",
+    "gpa_placeholder": "3.8/4.0",
+    "start_date": "تاريخ البدء",
+    "end_date": "تاريخ الانتهاء",
+    "current": "أدرس هنا حاليًا"
+  },
+  "skills": {
+    "add": "إضافة مهارة",
+    "placeholder": "مثال: React, UI Design..."
+  },
+  "languages": {
+    "add": "إضافة لغة",
+    "empty": "لم يتم إضافة لغات",
+    "empty_hint": "أضف اللغات التي تتحدثها",
+    "name": "اللغة",
+    "name_placeholder": "الإنجليزية",
+    "level": "المستوى",
+    "levels": {
+      "Native": "اللغة الأم",
+      "Fluent": "طلاقة",
+      "Intermediate": "متوسط",
+      "Basic": "مبتدئ"
+    }
+  },
+  "templates": {
+    "summary": "الملخص المهني",
+    "experience": "الخبرة العملية",
+    "education": "التعليم",
+    "skills": "المهارات",
+    "languages": "اللغات",
+    "empty_text": "املأ النموذج على اليمين لإنشاء سيرتك الذاتية.",
+    "role_placeholder": "الدور",
+    "name_placeholder": "اسمك"
+  },
+  "score": {
+    "title": "درجة السيرة الذاتية",
+    "view_tips": "عرض النصائح",
+    "hide_tips": "إخفاء النصائح",
+    "tip_personal": "أكمل معلوماتك الشخصية.",
+    "tip_summary": "أضف ملخصاً مهنياً.",
+    "tip_summary_length": "قم بتوسيع الملخص ليكون أكثر تفصيلاً.",
+    "tip_experience": "أضف خبراتك العملية.",
+    "tip_experience_length": "أضف مزيداً من التفاصيل لوصف خبراتك.",
+    "tip_education": "أضف خلفيتك التعليمية.",
+    "tip_skills": "أضف 3 مهارات على الأقل.",
+    "tip_languages": "أضف اللغات التي تتحدثها."
+  },
+  "enhance": {
+    "button": "تحسين ذكي",
+    "loading": "جاري التحسين...",
+    "api_key_missing": "الرجاء تعيين مفتاح API لـ Gemini في ملف .env.local.",
+    "error": "فشل الاتصال بخدمة الذكاء الاصطناعي. يرجى المحاولة مرة أخرى لاحقاً."
+  }
+}

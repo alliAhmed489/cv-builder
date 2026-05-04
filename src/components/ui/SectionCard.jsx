@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export function SectionCard({ title, subtitle, onRemove, children, defaultOpen = true }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(defaultOpen)
 
   return (
@@ -37,7 +39,7 @@ export function SectionCard({ title, subtitle, onRemove, children, defaultOpen =
           <div style={{ width: '3px', height: '18px', borderRadius: '2px', background: open ? '#c9a84c' : 'rgba(255,255,255,0.15)', flexShrink: 0, transition: 'background 0.2s' }} />
           <div style={{ minWidth: 0 }}>
             <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: open ? '#fff' : 'rgba(255,255,255,0.7)', transition: 'color 0.2s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {title || 'Untitled'}
+              {title || t('app.untitled')}
             </p>
             {subtitle && (
               <p style={{ margin: '1px 0 0', fontSize: '11px', color: 'rgba(255,255,255,0.35)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

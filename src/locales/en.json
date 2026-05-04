@@ -1,0 +1,127 @@
+{
+  "app": {
+    "title": "CVcraft",
+    "edit": "Edit",
+    "preview": "Preview",
+    "prev": "Prev",
+    "next": "Next",
+    "next_step": "Next Step →",
+    "done": "✓ Done",
+    "all_done": "✓ All Done",
+    "download_pdf": "Download PDF",
+    "exporting": "Exporting…",
+    "ai_coach": "AI Coach",
+    "updating": "Updating",
+    "export_failed": "Export failed. Please try again.",
+    "optional": "(Optional)",
+    "untitled": "Untitled"
+  },
+  "steps": {
+    "personal": "Personal",
+    "summary": "Summary",
+    "experience": "Experience",
+    "education": "Education",
+    "skills": "Skills",
+    "languages": "Languages"
+  },
+  "personal": {
+    "photo": "Profile Photo",
+    "photo_hint": "Optional · JPG or PNG",
+    "change": "Change",
+    "upload": "Upload",
+    "full_name": "Full Name",
+    "name_placeholder": "Mostfa Ahmed",
+    "job_title": "Job Title",
+    "title_placeholder": "Senior Product Designer",
+    "email": "Email",
+    "email_placeholder": "you@email.com",
+    "phone": "Phone",
+    "phone_placeholder": "+20 10 1234 5678",
+    "address": "Address",
+    "address_placeholder": "Cairo, Egypt",
+    "website": "Website / LinkedIn",
+    "website_placeholder": "linkedin.com/in/yourname"
+  },
+  "summary": {
+    "title": "Professional Summary",
+    "placeholder": "Write a short summary of your background and goals..."
+  },
+  "experience": {
+    "add": "Add Experience",
+    "empty": "No experience added",
+    "empty_hint": "Click below to add your first role",
+    "new_position": "New Position",
+    "role": "Role",
+    "role_placeholder": "Software Engineer",
+    "company": "Company",
+    "company_placeholder": "Google",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "current": "I currently work here",
+    "description": "Description",
+    "description_placeholder": "Describe your responsibilities and achievements..."
+  },
+  "education": {
+    "add": "Add Education",
+    "empty": "No education added",
+    "empty_hint": "Add your degrees and qualifications",
+    "institution": "Institution",
+    "institution_placeholder": "Cairo University",
+    "degree": "Degree",
+    "degree_placeholder": "Bachelor's",
+    "field": "Field of Study",
+    "field_placeholder": "Computer Science",
+    "gpa": "GPA",
+    "gpa_placeholder": "3.8/4.0",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "current": "I currently study here"
+  },
+  "skills": {
+    "add": "Add Skill",
+    "placeholder": "e.g. React, UI Design..."
+  },
+  "languages": {
+    "add": "Add Language",
+    "empty": "No languages added",
+    "empty_hint": "Add languages you speak",
+    "name": "Language",
+    "name_placeholder": "English",
+    "level": "Level",
+    "levels": {
+      "Native": "Native",
+      "Fluent": "Fluent",
+      "Intermediate": "Intermediate",
+      "Basic": "Basic"
+    }
+  },
+  "templates": {
+    "summary": "Professional Summary",
+    "experience": "Work Experience",
+    "education": "Education",
+    "skills": "Skills",
+    "languages": "Languages",
+    "empty_text": "Fill in the form on the left to populate your CV.",
+    "role_placeholder": "Role",
+    "name_placeholder": "Your Name"
+  },
+  "score": {
+    "title": "CV Score",
+    "view_tips": "View Tips",
+    "hide_tips": "Hide Tips",
+    "tip_personal": "Complete your personal information.",
+    "tip_summary": "Add a professional summary.",
+    "tip_summary_length": "Expand your summary to be more detailed.",
+    "tip_experience": "Add your work experience.",
+    "tip_experience_length": "Expand your experience descriptions.",
+    "tip_education": "Add your educational background.",
+    "tip_skills": "Add at least 3 skills.",
+    "tip_languages": "Add the languages you speak."
+  },
+  "enhance": {
+    "button": "Magic Enhance",
+    "loading": "Enhancing...",
+    "api_key_missing": "Please set your Gemini API key in the .env.local file.",
+    "error": "Failed to connect to AI service. Please try again later."
+  }
+}

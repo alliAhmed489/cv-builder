@@ -1,15 +1,25 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Download, RefreshCw, FileText, User, AlignLeft,
   Briefcase, GraduationCap, Zap, Globe, Sparkles,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, GripVertical
 } from 'lucide-react'
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors
+} from '@dnd-kit/core'
+import {
+  SortableContext, arrayMove, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useCV } from './hooks/useCV.js'
 import { exportPDF } from './utils/exportPDF.js'
 import { THEMES } from './data/themes.js'
 import { AnimatedStep } from './components/ui/AnimatedStep.jsx'
+import { ScorePanel } from './components/ui/ScorePanel.jsx'
 import { AIModal } from './components/ui/AIModal.jsx'
+import { LanguageSwitcher } from './components/ui/LanguageSwitcher.jsx'
 import { PersonalForm } from './components/form/PersonalForm.jsx'
 import { SummaryForm } from './components/form/SummaryForm.jsx'
 import { ExperienceForm } from './components/form/ExperienceForm.jsx'
@@ -18,7 +28,7 @@ import { SkillsForm } from './components/form/SkillsForm.jsx'
 import { LanguagesForm } from './components/form/LanguagesForm.jsx'
 import { CVPreview } from './components/preview/CVPreview.jsx'
 
-const STEPS = [
+const INITIAL_STEPS = [
   { id: 'personal',   label: 'Personal',   icon: User },
   { id: 'summary',    label: 'Summary',     icon: AlignLeft },
   { id: 'experience', label: 'Experience',  icon: Briefcase },
@@ -45,6 +55,45 @@ function useBreakpoint() {
   return bp
 }
 
+function SortableTab({ step, active, done, isTablet, isMobile, onClick }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step.id })
+  const { t, i18n } = useTranslation()
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '4px',
+    padding: isMobile ? '7px 12px' : (isTablet ? '5px 8px' : '5px 12px'),
+    borderRadius: '8px', border: isDragging ? '1px solid #c9a84c' : '1px solid transparent',
+    cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+    background: active ? '#c9a84c' : done ? 'rgba(201,168,76,0.12)' : (isMobile ? 'rgba(255,255,255,0.05)' : 'transparent'),
+    color: active ? '#1a1a2e' : done ? '#c9a84c' : (isMobile ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.4)'),
+    fontSize: isMobile ? '12px' : (isTablet ? '11px' : '12px'),
+    fontWeight: active ? 700 : (isMobile ? 400 : 500),
+    fontFamily: "'DM Sans', sans-serif",
+    opacity: isDragging ? 0.6 : 1,
+    boxShadow: isDragging ? '0 8px 16px rgba(0,0,0,0.3)' : 'none',
+    zIndex: isDragging ? 10 : 1,
+    position: 'relative'
+  }
+
+  const Icon = step.icon
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div {...attributes} {...listeners} style={{ cursor: 'grab', display: 'flex', alignItems: 'center', opacity: active ? 0.6 : 0.4 }}>
+        <GripVertical size={13} />
+      </div>
+      <button onClick={onClick} style={{ background: 'none', border: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '5px', padding: 0, cursor: 'pointer', fontSize: 'inherit', fontWeight: 'inherit', fontFamily: 'inherit' }}>
+        <Icon size={11} />
+        {isMobile && t(`steps.${step.id}`)}
+        {!isMobile && !isTablet && t(`steps.${step.id}`)}
+        {!isMobile && isTablet && <span style={{ fontSize: '10px' }}>{i18n.language === 'ar' ? t(`steps.${step.id}`) : t(`steps.${step.id}`).slice(0, 3)}</span>}
+      </button>
+    </div>
+  )
+}
+
 export default function App() {
   const [activeStep, setActiveStep] = useState('personal')
   const [exporting, setExporting]   = useState(false)
@@ -53,14 +102,42 @@ export default function App() {
   const [showAI, setShowAI]         = useState(false)
   const [mobileTab, setMobileTab]   = useState('form')
 
+  const [steps, setSteps]           = useState(INITIAL_STEPS)
+
   const cvHook = useCV()
   const { cv, template, setTemplate, resetCV } = cvHook
   const bp = useBreakpoint()
 
   const activeTheme = THEMES.find(t => t.id === themeId) || THEMES[0]
-  const activeIndex = STEPS.findIndex(s => s.id === activeStep)
+  const activeIndex = steps.findIndex(s => s.id === activeStep)
   const isMobile    = bp === 'mobile'
   const isTablet    = bp === 'tablet'
+
+  const { t, i18n } = useTranslation()
+
+  useEffect(() => {
+    document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr'
+    document.documentElement.lang = i18n.language
+  }, [i18n.language])
+
+
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event
+    if (active.id !== over?.id) {
+      setSteps((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id)
+        const newIndex = items.findIndex((i) => i.id === over.id)
+        return arrayMove(items, oldIndex, newIndex)
+      })
+    }
+  }
 
   // Prevent double-tap on mobile + proper error handling
   async function handleExport() {
@@ -70,7 +147,7 @@ export default function App() {
       await exportPDF(cv.personal.name || 'my-cv')
     } catch (err) {
       console.error('[handleExport]', err)
-      alert('Export failed. Please try again.')
+      alert(t('app.export_failed'))
     } finally {
       setExporting(false)
     }
@@ -111,14 +188,14 @@ export default function App() {
           borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, zIndex: 50,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #c9a84c, #e8cc7a)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FileText size={13} color="#1a1a2e" />
-            </div>
+            <img src="/cv_builder_logo.svg" alt="CV Builder Logo" style={{ width: '28px', height: '28px' }} />
             <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>CVcraft</span>
           </div>
 
-          {/* Edit / Preview toggle */}
-          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: '9px', padding: '3px', gap: '2px' }}>
+          {/* Edit / Preview toggle & Language Switcher */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <LanguageSwitcher />
+            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: '9px', padding: '3px', gap: '2px' }}>
             {['form', 'preview'].map(tab => (
               <button key={tab} onClick={() => setMobileTab(tab)} style={{
                 padding: '5px 14px', borderRadius: '7px', border: 'none', cursor: 'pointer',
@@ -127,9 +204,10 @@ export default function App() {
                 fontSize: '12px', fontWeight: mobileTab === tab ? 700 : 400,
                 fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
               }}>
-                {tab === 'form' ? 'Edit' : 'Preview'}
+                {tab === 'form' ? t('app.edit') : t('app.preview')}
               </button>
             ))}
+            </div>
           </div>
         </header>
 
@@ -137,7 +215,7 @@ export default function App() {
         <div style={{ height: '2px', background: 'rgba(255,255,255,0.06)', flexShrink: 0 }}>
           <motion.div
             style={{ height: '100%', background: 'linear-gradient(90deg, #c9a84c, #e8cc7a)' }}
-            animate={{ width: `${((activeIndex + 1) / STEPS.length) * 100}%` }}
+            animate={{ width: `${((activeIndex + 1) / steps.length) * 100}%` }}
             transition={{ duration: 0.35 }}
           />
         </div>
@@ -154,31 +232,26 @@ export default function App() {
                 style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#1a1a2e' }}
               >
                 {/* Step tabs — horizontal scroll */}
-                <div style={{
-                  display: 'flex', gap: '4px', padding: '10px 14px',
-                  background: '#16162a', borderBottom: '1px solid rgba(255,255,255,0.06)',
-                  overflowX: 'auto', flexShrink: 0, scrollbarWidth: 'none',
-                }}>
-                  {STEPS.map((step, idx) => {
-                    const Icon   = step.icon
-                    const active = activeStep === step.id
-                    const done   = idx < activeIndex
-                    return (
-                      <button key={step.id} onClick={() => setActiveStep(step.id)} style={{
-                        display: 'flex', alignItems: 'center', gap: '5px',
-                        padding: '7px 12px', borderRadius: '8px', border: 'none',
-                        cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                        background: active ? '#c9a84c' : done ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.05)',
-                        color: active ? '#1a1a2e' : done ? '#c9a84c' : 'rgba(255,255,255,0.45)',
-                        fontSize: '12px', fontWeight: active ? 700 : 400,
-                        fontFamily: "'DM Sans', sans-serif",
-                      }}>
-                        <Icon size={11} />
-                        {step.label}
-                      </button>
-                    )
-                  })}
-                </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={steps.map(s => s.id)} strategy={horizontalListSortingStrategy}>
+                    <div style={{
+                      display: 'flex', gap: '4px', padding: '10px 14px',
+                      background: '#16162a', borderBottom: '1px solid rgba(255,255,255,0.06)',
+                      overflowX: 'auto', flexShrink: 0, scrollbarWidth: 'none',
+                    }}>
+                      {steps.map((step, idx) => {
+                        const active = activeStep === step.id
+                        const done   = idx < activeIndex
+                        return (
+                          <SortableTab 
+                            key={step.id} step={step} active={active} done={done}
+                            isTablet={false} isMobile={true} onClick={() => setActiveStep(step.id)} 
+                          />
+                        )
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
 
                 {/* Section label */}
                 <div style={{
@@ -186,17 +259,20 @@ export default function App() {
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {(() => { const Icon = STEPS[activeIndex].icon; return <Icon size={14} color="#c9a84c" /> })()}
-                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{STEPS[activeIndex].label}</span>
+                    {(() => { const Icon = steps[activeIndex]?.icon; return Icon ? <Icon size={14} color="#c9a84c" /> : null })()}
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{t(`steps.${steps[activeIndex]?.id}`)}</span>
                   </div>
                   <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)', padding: '3px 10px', borderRadius: '20px' }}>
-                    {activeIndex + 1} / {STEPS.length}
+                    {activeIndex + 1} / {steps.length}
                   </span>
                 </div>
 
                 {/* Form scroll — paddingBottom leaves room for sticky bar */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: '16px', paddingBottom: '100px' }}>
                   <AnimatedStep stepKey={activeStep}>{renderStep()}</AnimatedStep>
+                  <div style={{ marginTop: '24px', paddingBottom: '24px' }}>
+                    <ScorePanel cv={cv} onImprove={setActiveStep} />
+                  </div>
                 </div>
 
                 {/* Prev / Next */}
@@ -205,7 +281,7 @@ export default function App() {
                   background: '#16162a', display: 'flex', gap: '10px', flexShrink: 0,
                 }}>
                   <button
-                    onClick={() => { if (activeIndex > 0) setActiveStep(STEPS[activeIndex - 1].id) }}
+                    onClick={() => { if (activeIndex > 0) setActiveStep(steps[activeIndex - 1].id) }}
                     disabled={activeIndex === 0}
                     style={{
                       width: '44px', height: '44px', borderRadius: '10px',
@@ -219,19 +295,19 @@ export default function App() {
                     <ChevronLeft size={18} />
                   </button>
                   <button
-                    onClick={() => { if (activeIndex < STEPS.length - 1) setActiveStep(STEPS[activeIndex + 1].id) }}
-                    disabled={activeIndex === STEPS.length - 1}
+                    onClick={() => { if (activeIndex < steps.length - 1) setActiveStep(steps[activeIndex + 1].id) }}
+                    disabled={activeIndex === steps.length - 1}
                     style={{
                       flex: 1, height: '44px', borderRadius: '10px', border: 'none',
-                      background: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)',
-                      color: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.25)' : '#1a1a2e',
+                      background: activeIndex === steps.length - 1 ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)',
+                      color: activeIndex === steps.length - 1 ? 'rgba(255,255,255,0.25)' : '#1a1a2e',
                       fontSize: '13px', fontWeight: 700,
-                      cursor: activeIndex === STEPS.length - 1 ? 'not-allowed' : 'pointer',
+                      cursor: activeIndex === steps.length - 1 ? 'not-allowed' : 'pointer',
                       fontFamily: "'DM Sans', sans-serif",
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
                     }}
                   >
-                    {activeIndex === STEPS.length - 1 ? '✓ Done' : <>Next <ChevronRight size={16} /></>}
+                    {activeIndex === steps.length - 1 ? t('app.done') : <>{t('app.next')} <ChevronRight size={16} /></>}
                   </button>
                 </div>
               </motion.div>
@@ -304,11 +380,11 @@ export default function App() {
             cursor: 'not-allowed', fontFamily: "'DM Sans', sans-serif",
           }}>
             <Sparkles size={15} /> 
-            <span style={{ textDecoration: 'line-through' }}>AI Coach</span>
+            <span style={{ textDecoration: 'line-through' }}>{t('app.ai_coach')}</span>
             <span style={{
               background: 'rgba(201,168,76,0.2)', color: '#c9a84c', 
               fontSize: '10px', padding: '2px 6px', borderRadius: '6px', marginLeft: '2px', textDecoration: 'none'
-            }}>Updating</span>
+            }}>{t('app.updating')}</span>
           </motion.button>
 
           <motion.button onClick={handleExport} disabled={exporting} whileTap={{ scale: 0.95 }} style={{
@@ -321,7 +397,7 @@ export default function App() {
             boxShadow: '0 4px 16px rgba(201,168,76,0.35)',
           }}>
             <Download size={15} />
-            {exporting ? 'Exporting…' : 'Download PDF'}
+            {exporting ? t('app.exporting') : t('app.download_pdf')}
           </motion.button>
         </div>
 
@@ -340,7 +416,11 @@ export default function App() {
       display: 'flex', flexDirection: 'column',
       height: '100dvh', overflow: 'hidden',
       background: '#0a0a18', fontFamily: "'DM Sans', sans-serif",
+      position: 'relative'
     }}>
+
+      {/* Wrapping the rest of the content so it stays above parallax */}
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
 
       {/* ── Top navigation bar ── */}
       <header style={{
@@ -352,43 +432,32 @@ export default function App() {
 
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'linear-gradient(135deg, #c9a84c, #e8cc7a)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <FileText size={14} color="#1a1a2e" />
-          </div>
+          <img src="/cv_builder_logo.svg" alt="CV Builder Logo" style={{ width: '30px', height: '30px' }} />
           {!isTablet && <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>CVcraft</span>}
         </div>
 
         {/* Step tabs */}
-        <nav style={{ display: 'flex', gap: '2px', flex: 1, justifyContent: 'center', overflow: 'hidden' }}>
-          {STEPS.map((step, idx) => {
-            const Icon   = step.icon
-            const active = activeStep === step.id
-            const done   = idx < activeIndex
-            return (
-              <motion.button
-                key={step.id}
-                onClick={() => setActiveStep(step.id)}
-                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '4px',
-                  padding: isTablet ? '5px 8px' : '5px 12px',
-                  borderRadius: '8px', border: 'none', cursor: 'pointer',
-                  background: active ? '#c9a84c' : done ? 'rgba(201,168,76,0.1)' : 'transparent',
-                  color: active ? '#1a1a2e' : done ? '#c9a84c' : 'rgba(255,255,255,0.4)',
-                  fontSize: isTablet ? '11px' : '12px', fontWeight: active ? 700 : 500,
-                  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.2s', whiteSpace: 'nowrap',
-                }}
-              >
-                <Icon size={11} />
-                {!isTablet && step.label}
-                {isTablet && <span style={{ fontSize: '10px' }}>{step.label.slice(0, 3)}</span>}
-              </motion.button>
-            )
-          })}
-        </nav>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={steps.map(s => s.id)} strategy={horizontalListSortingStrategy}>
+            <nav style={{ display: 'flex', gap: '2px', flex: 1, justifyContent: 'center', overflow: 'hidden' }}>
+              {steps.map((step, idx) => {
+                const active = activeStep === step.id
+                const done   = idx < activeIndex
+                return (
+                  <SortableTab 
+                    key={step.id} step={step} active={active} done={done}
+                    isTablet={isTablet} isMobile={false} onClick={() => setActiveStep(step.id)} 
+                  />
+                )
+              })}
+            </nav>
+          </SortableContext>
+        </DndContext>
 
         {/* Right actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          
+          <LanguageSwitcher />
 
           {/* Template switcher */}
           <div style={{ display: 'flex', gap: '2px', background: 'rgba(255,255,255,0.06)', borderRadius: '8px', padding: '3px' }}>
@@ -462,11 +531,11 @@ export default function App() {
             }}
           >
             <Sparkles size={13} />
-            {!isTablet && <span style={{ textDecoration: 'line-through' }}>AI Coach</span>}
+            {!isTablet && <span style={{ textDecoration: 'line-through' }}>{t('app.ai_coach')}</span>}
             <span style={{
               background: 'rgba(201,168,76,0.2)', color: '#c9a84c', 
               fontSize: '9px', padding: '1px 5px', borderRadius: '4px', marginLeft: '2px', textDecoration: 'none'
-            }}>Updating</span>
+            }}>{t('app.updating')}</span>
           </motion.button>
 
           {/* Reset */}
@@ -495,7 +564,7 @@ export default function App() {
             }}
           >
             <Download size={13} />
-            {exporting ? 'Exporting…' : 'Download PDF'}
+            {exporting ? t('app.exporting') : t('app.download_pdf')}
           </motion.button>
         </div>
       </header>
@@ -504,7 +573,7 @@ export default function App() {
       <div style={{ height: '2px', background: 'rgba(255,255,255,0.06)', flexShrink: 0 }}>
         <motion.div
           style={{ height: '100%', background: 'linear-gradient(90deg, #c9a84c, #e8cc7a)' }}
-          animate={{ width: `${((activeIndex + 1) / STEPS.length) * 100}%` }}
+          animate={{ width: `${((activeIndex + 1) / steps.length) * 100}%` }}
           transition={{ duration: 0.4 }}
         />
       </div>
@@ -528,7 +597,8 @@ export default function App() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {(() => {
-                const Icon = STEPS[activeIndex].icon
+                const Icon = steps[activeIndex]?.icon
+                if (!Icon) return null
                 return (
                   <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Icon size={13} color="#c9a84c" />
@@ -536,17 +606,20 @@ export default function App() {
                 )
               })()}
               <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>
-                {STEPS[activeIndex].label}
+                {t(`steps.${steps[activeIndex]?.id}`)}
               </span>
             </div>
             <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)', padding: '3px 10px', borderRadius: '20px' }}>
-              {activeIndex + 1} / {STEPS.length}
+              {activeIndex + 1} / {steps.length}
             </span>
           </div>
 
           {/* Scrollable form body */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
             <AnimatedStep stepKey={activeStep}>{renderStep()}</AnimatedStep>
+            <div style={{ marginTop: '24px', paddingBottom: '24px' }}>
+              <ScorePanel cv={cv} onImprove={setActiveStep} />
+            </div>
           </div>
 
           {/* Footer: progress dots + prev/next */}
@@ -555,10 +628,10 @@ export default function App() {
             background: '#16162a', flexShrink: 0,
           }}>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '5px', marginBottom: '12px' }}>
-              {STEPS.map((_, i) => (
+              {steps.map((_, i) => (
                 <motion.div
                   key={i}
-                  onClick={() => setActiveStep(STEPS[i].id)}
+                  onClick={() => setActiveStep(steps[i].id)}
                   animate={{
                     width: i === activeIndex ? '18px' : '6px',
                     background: i === activeIndex ? '#c9a84c' : i < activeIndex ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.12)',
@@ -571,7 +644,7 @@ export default function App() {
 
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
-                onClick={() => { if (activeIndex > 0) setActiveStep(STEPS[activeIndex - 1].id) }}
+                onClick={() => { if (activeIndex > 0) setActiveStep(steps[activeIndex - 1].id) }}
                 disabled={activeIndex === 0}
                 style={{
                   padding: '10px 16px', borderRadius: '10px',
@@ -581,23 +654,23 @@ export default function App() {
                   fontFamily: "'DM Sans', sans-serif", opacity: activeIndex === 0 ? 0.3 : 1,
                 }}
               >
-                ← Prev
+                ← {t('app.prev')}
               </button>
               <motion.button
-                onClick={() => { if (activeIndex < STEPS.length - 1) setActiveStep(STEPS[activeIndex + 1].id) }}
-                disabled={activeIndex === STEPS.length - 1}
-                whileHover={{ scale: activeIndex === STEPS.length - 1 ? 1 : 1.02 }}
+                onClick={() => { if (activeIndex < steps.length - 1) setActiveStep(steps[activeIndex + 1].id) }}
+                disabled={activeIndex === steps.length - 1}
+                whileHover={{ scale: activeIndex === steps.length - 1 ? 1 : 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 style={{
                   flex: 1, padding: '11px', borderRadius: '10px', border: 'none',
-                  background: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)',
-                  color: activeIndex === STEPS.length - 1 ? 'rgba(255,255,255,0.25)' : '#1a1a2e',
+                  background: activeIndex === steps.length - 1 ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg, #c9a84c, #e8cc7a)',
+                  color: activeIndex === steps.length - 1 ? 'rgba(255,255,255,0.25)' : '#1a1a2e',
                   fontSize: '13px', fontWeight: 700,
-                  cursor: activeIndex === STEPS.length - 1 ? 'not-allowed' : 'pointer',
+                  cursor: activeIndex === steps.length - 1 ? 'not-allowed' : 'pointer',
                   fontFamily: "'DM Sans', sans-serif",
                 }}
               >
-                {activeIndex === STEPS.length - 1 ? '✓ All Done' : 'Next Step →'}
+                {activeIndex === steps.length - 1 ? t('app.all_done') : t('app.next_step')}
               </motion.button>
             </div>
           </div>
@@ -625,6 +698,7 @@ export default function App() {
       </div>
 
       {showAI && <AIModal cv={cv} onClose={() => setShowAI(false)} onApply={applyAI} />}
+      </div>
     </div>
   )
 }

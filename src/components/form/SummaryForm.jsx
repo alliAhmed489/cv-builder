@@ -1,7 +1,10 @@
 import { Input } from '../ui/Input.jsx'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 
 export function SummaryForm({ summary, updateSummary }) {
+  const { t } = useTranslation()
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -22,11 +25,11 @@ export function SummaryForm({ summary, updateSummary }) {
 
       <Input
         dark
-        label="Professional Summary"
+        label={t('summary.title')}
         id="sf-summary"
         value={summary}
         onChange={e => updateSummary(e.target.value)}
-        placeholder="Experienced designer with 8+ years crafting user-centred digital products across fintech and SaaS. Passionate about bridging business goals with intuitive interfaces that delight users."
+        placeholder={t('summary.placeholder')}
         rows={8}
       />
 
